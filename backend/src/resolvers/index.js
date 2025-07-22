@@ -96,7 +96,17 @@ const resolvers = {
     createStudent: async (_, args) => {
       const custom_id = `STU-${await Counter.getNextSequence('student')}`;
       const student = new Student({ ...args, custom_id });
-      return await student.save();
+      await student.save();
+      
+      // Add student to the batch's student_ids array
+      if (args.batch_id) {
+        await Batch.findByIdAndUpdate(
+          args.batch_id,
+          { $push: { student_ids: student._id } }
+        );
+      }
+
+      return student;
     },
     markAttendance: async (_, { date, batch_id, student_id, status }, { user }) => {
       if (!user) throw new Error('Not authenticated');

@@ -5,6 +5,8 @@ import { ApolloServer } from 'apollo-server-express';
 import mongoose from 'mongoose';
 import multer from 'multer';
 import { Parser as Json2csvParser } from 'json2csv';
+import unzipper from 'unzipper';
+import { parse as csvParse } from 'csv-parse/sync';
 import Student from './models/Student.js';
 import Batch from './models/Batch.js';
 import FeePayment from './models/FeePayment.js';
@@ -13,6 +15,7 @@ import Attendance from './models/Attendance.js';
 import User from './models/User.js';
 import Paper from './models/Paper.js';
 import archiver from 'archiver';
+import path from 'path';
 
 import typeDefs from './schemas/index.js';
 import resolvers from './resolvers/index.js';
@@ -37,6 +40,154 @@ app.post('/upload', upload.single('file'), (req, res) => {
     );
     stream.end(req.file.buffer);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/import/backup', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    // Extract ZIP from buffer
+    const zip = await unzipper.Open.buffer(req.file.buffer);
+    const results = {};
+    for (const entry of zip.files) {
+      if (entry.type === 'File' && entry.path.endsWith('.csv')) {
+        const content = await entry.buffer();
+        const csv = csvParse(content.toString(), { columns: true, skip_empty_lines: true });
+        results[entry.path] = csv;
+      }
+    }
+    // --- Restore Logic ---
+    // 1. Tuition
+    let tuitionId = null;
+    let tuitionCustomId = null;
+    let ownerUser = null;
+    const tuitionRows = results['tuition.csv'] || [];
+    if (tuitionRows.length) {
+      const t = tuitionRows[0];
+      // Extract owner phone from 'Owner' or 'Contact Info'
+      let ownerPhone = '';
+      if (t['Owner'] && t['Owner'].includes('(')) {
+        ownerPhone = t['Owner'].split('(')[1].replace(')', '').trim();
+      } else if (t['Contact Info']) {
+        ownerPhone = t['Contact Info'].trim();
+      }
+      if (!ownerPhone) throw new Error('Owner phone not found in tuition.csv');
+      ownerUser = await User.findOne({ phone: ownerPhone });
+      if (!ownerUser) throw new Error('Owner user not found for phone: ' + ownerPhone);
+      // Check if already exists
+      let tuitionDoc = await Tuition.findOne({ custom_id: t['Tuition ID'] });
+      if (!tuitionDoc) {
+        tuitionDoc = await Tuition.create({
+          custom_id: t['Tuition ID'],
+          name: t['Name'],
+          address: t['Address'],
+          contact_info: t['Contact Info'],
+          fees_structure: JSON.parse(t['Fees Structure']),
+          owner_id: ownerUser._id
+        });
+      }
+      tuitionId = tuitionDoc._id;
+      tuitionCustomId = tuitionDoc.custom_id;
+    }
+    // 2. Batches
+    const batchIdMap = {}; // custom_id -> _id
+    const batchesRows = results['batches.csv'] || [];
+    for (const b of batchesRows) {
+      let batchDoc = await Batch.findOne({ custom_id: b['Batch ID'] });
+      if (!batchDoc) {
+        batchDoc = await Batch.create({
+          custom_id: b['Batch ID'],
+          name: b['Name'],
+          standard: b['Standard'],
+          tuition_id: tuitionId,
+          teacher_ids: [] // Teachers restore can be improved later
+        });
+      }
+      batchIdMap[b['Batch ID']] = batchDoc._id;
+    }
+    // 3. Students (all students/*/*.csv)
+    const studentIdMap = {}; // custom_id -> _id
+    for (const file in results) {
+      if (file.startsWith('students/') && file.endsWith('.csv')) {
+        const rows = results[file];
+        for (const s of rows) {
+          let studentDoc = await Student.findOne({ custom_id: s['Student ID'] });
+          if (!studentDoc) {
+            studentDoc = await Student.create({
+              custom_id: s['Student ID'],
+              name: s['Name'],
+              contact_info: { phone: s['Phone'], address: s['Address'] },
+              standard: file.split('/')[1],
+              batch_id: batchIdMap[s['Batch ID']],
+              tuition_id: tuitionId
+            });
+          }
+          studentIdMap[s['Student ID']] = studentDoc._id;
+        }
+      }
+    }
+    // 4. FeePayments (fees/{std}/{batch}.csv)
+    let feeCount = 0;
+    for (const file in results) {
+      if (file.startsWith('fees/') && file.endsWith('.csv')) {
+        const rows = results[file];
+        for (const f of rows) {
+          const student_id = studentIdMap[f['Student ID']];
+          if (!student_id) continue;
+          // Find tuition_id from mapping
+          let tuition_id = tuitionId;
+          // Parse date
+          let date = f['Last Payment Date'] && f['Last Payment Date'] !== 'N/A' ? new Date(f['Last Payment Date']) : new Date();
+          // Insert FeePayment
+          await FeePayment.create({
+            student_id,
+            tuition_id,
+            amount: Number(f['Paid Fee']) || 0,
+            mode: f['Last Payment Mode'] || 'cash',
+            date,
+            verified: true,
+            note: f['Note'] === '' ? null : f['Note']
+          });
+          feeCount++;
+        }
+      }
+    }
+    // 5. Attendance (attendance/{std}/{batch}/{date}.csv)
+    let attCount = 0;
+    for (const file in results) {
+      if (file.startsWith('attendance/') && file.endsWith('.csv')) {
+        const rows = results[file];
+        for (const a of rows) {
+          const student_id = studentIdMap[a['Student ID']];
+          const batch_id = batchIdMap[a['Batch ID']];
+          if (!student_id || !batch_id) continue;
+          // Parse date from file path or row
+          let date = a['Date'] ? new Date(a['Date']) : new Date();
+          // Find marked_by user (optional)
+          let marked_by = null;
+          if (a['Marked By'] && a['Marked By'].includes('(')) {
+            const phone = a['Marked By'].split('(')[1].replace(')', '').trim();
+            const user = await User.findOne({ phone });
+            if (user) marked_by = user._id;
+          }
+          if (!marked_by) marked_by = ownerUser?._id; // Fallback to owner
+          if (!marked_by) continue; // Still missing, skip
+          await Attendance.create({
+            date,
+            batch_id,
+            student_id,
+            status: a['Status'],
+            marked_by,
+            note: a['Note'] === '' ? null : a['Note']
+          });
+          attCount++;
+        }
+      }
+    }
+    res.json({ message: 'Restore complete!', tuitionId, batchCount: Object.keys(batchIdMap).length, studentCount: Object.keys(studentIdMap).length, feeCount, attCount });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -365,137 +516,157 @@ app.get('/report/backup', async (req, res) => {
     const students = await Student.find({ tuition_id }).lean();
     const studentIds = students.map(s => s._id);
     const batchIds = batches.map(b => b._id);
-
     const attendance = await Attendance.find({ student_id: { $in: studentIds } }).lean();
     const feepayments = await FeePayment.find({ student_id: { $in: studentIds } }).lean();
     const papers = await Paper.find({ tuition_id }).lean();
-    
-    // Fetch users for 'marked_by' and 'teacher_ids' names/custom_ids
     const userIdsInAttendance = attendance.map(a => a.marked_by).filter(Boolean);
     const userIdsInBatches = batches.flatMap(b => b.teacher_ids).filter(Boolean);
     const allUserIds = [...new Set([...userIdsInAttendance, ...userIdsInBatches, tuition.owner_id])];
     const users = await User.find({ _id: { $in: allUserIds } }).lean();
-
-    // Create maps for easy lookup
     const studentMap = new Map(students.map(s => [s._id.toString(), s]));
     const batchMap = new Map(batches.map(b => [b._id.toString(), b]));
     const userMap = new Map(users.map(u => [u._id.toString(), u]));
-    
-    // ----- CSV Generation -----
     const parser = (fields) => new Json2csvParser({ fields });
 
-    // 1. Tuition CSV
+    // Tuition CSV (with owner phone and sub-teachers)
+    const owner = userMap.get(tuition.owner_id.toString());
+    const subTeachers = users.filter(u => u.role === 'sub_teacher');
     const tuitionData = [{
       'Tuition ID': tuition.custom_id,
       'Name': tuition.name,
       'Address': tuition.address,
-      'Owner': userMap.get(tuition.owner_id.toString())?.name || '',
-      'Contact Info': tuition.contact_info,
+      'Owner': owner ? `${owner.name} (${owner.phone})` : '',
+      'Contact Info': owner ? owner.phone : '',
+      'Sub-Teachers': subTeachers.map(t => `${t.name} (${t.phone})`).join('; '),
       'Fees Structure': JSON.stringify(tuition.fees_structure)
     }];
     const tuitionCsv = parser(Object.keys(tuitionData[0])).parse(tuitionData);
-    
-    // 2. Batches CSV
+
+    // Batches CSV (user-friendly)
     const batchesData = batches.map(b => ({
       'Batch ID': b.custom_id,
       'Name': b.name,
       'Standard': b.standard,
-      'Teachers': (b.teacher_ids || []).map(tid => userMap.get(tid.toString())?.name || '').join(', '),
-      'Schedule': `${(b.schedule?.days || []).join(', ')} at ${b.schedule?.time || ''}`
+      'Teachers': (b.teacher_ids || []).map(tid => userMap.get(tid.toString())?.name || '').join(', ')
     }));
     const batchesCsv = batches.length ? parser(Object.keys(batchesData[0])).parse(batchesData) : '';
 
-    // 3. Papers CSV
+    // Papers CSV (unchanged)
     const papersData = papers.map(p => ({
-        'Title': p.title,
-        'Standard': p.standard,
-        'File URL': p.file_url,
-        'Uploaded By': userMap.get(p.uploaded_by?.toString())?.name || ''
+      'Title': p.title,
+      'Standard': p.standard,
+      'File URL': p.file_url,
+      'Uploaded By': userMap.get(p.uploaded_by?.toString())?.name || ''
     }));
     const papersCsv = papers.length ? parser(Object.keys(papersData[0])).parse(papersData) : '';
 
-    // Group students, fees, attendance by standard
-    const dataByStandard = {};
+    // Group by std and batch
+    const stdBatchMap = {};
+    batches.forEach(b => {
+      if (!stdBatchMap[b.standard]) stdBatchMap[b.standard] = {};
+      stdBatchMap[b.standard][b.custom_id] = b;
+    });
     students.forEach(s => {
-        if (!dataByStandard[s.standard]) {
-            dataByStandard[s.standard] = { students: [], fees: [], attendance: [] };
-        }
-        dataByStandard[s.standard].students.push(s);
+      const batch = batchMap.get(s.batch_id?.toString());
+      if (!batch) return;
+      if (!stdBatchMap[batch.standard][batch.custom_id].students) stdBatchMap[batch.standard][batch.custom_id].students = [];
+      stdBatchMap[batch.standard][batch.custom_id].students.push(s);
     });
-    
-    feepayments.forEach(f => {
-        const student = studentMap.get(f.student_id.toString());
-        if (student && dataByStandard[student.standard]) {
-            dataByStandard[student.standard].fees.push({ ...f, student });
-        }
-    });
-
+    // Attendance: std > batch > date
     attendance.forEach(a => {
-        const student = studentMap.get(a.student_id.toString());
-        if (student && dataByStandard[student.standard]) {
-            dataByStandard[student.standard].attendance.push({ ...a, student });
-        }
+      const student = studentMap.get(a.student_id.toString());
+      const batch = batchMap.get(a.batch_id?.toString());
+      if (!student || !batch) return;
+      if (!stdBatchMap[batch.standard][batch.custom_id].attendance) stdBatchMap[batch.standard][batch.custom_id].attendance = {};
+      const dateStr = a.date ? a.date.toISOString().slice(0, 10) : 'unknown';
+      if (!stdBatchMap[batch.standard][batch.custom_id].attendance[dateStr]) stdBatchMap[batch.standard][batch.custom_id].attendance[dateStr] = [];
+      stdBatchMap[batch.standard][batch.custom_id].attendance[dateStr].push({ ...a, student });
+    });
+    // Fees: std > batch
+    feepayments.forEach(f => {
+      const student = studentMap.get(f.student_id.toString());
+      const batch = batchMap.get(student?.batch_id?.toString());
+      if (!student || !batch) return;
+      if (!stdBatchMap[batch.standard][batch.custom_id].fees) stdBatchMap[batch.standard][batch.custom_id].fees = [];
+      stdBatchMap[batch.standard][batch.custom_id].fees.push({ ...f, student });
     });
 
-    // ----- Create ZIP -----
+    // Create ZIP
     res.header('Content-Type', 'application/zip');
     res.attachment(`backup_${tuition.custom_id}_${new Date().toISOString().slice(0, 10)}.zip`);
     const archive = archiver('zip', { zlib: { level: 9 } });
     archive.pipe(res);
-
-    // Add main CSVs
     if (tuitionCsv) archive.append(tuitionCsv, { name: 'tuition.csv' });
     if (batchesCsv) archive.append(batchesCsv, { name: 'batches.csv' });
     if (papersCsv) archive.append(papersCsv, { name: 'papers.csv' });
 
-    // Add standard-wise CSVs
-    for (const standard in dataByStandard) {
-        // Students CSV for standard
-        const stdStudentsData = dataByStandard[standard].students.map((s, i) => ({
+    // Students, Fees, Attendance: std-wise > batch-wise > (date-wise for attendance)
+    for (const std in stdBatchMap) {
+      for (const batchId in stdBatchMap[std]) {
+        const batch = stdBatchMap[std][batchId];
+        // Students CSV
+        if (batch.students && batch.students.length) {
+          const studentsData = batch.students.map((s, i) => ({
             'Roll No': i + 1,
             'Student ID': s.custom_id,
             'Name': s.name,
             'Phone': s.contact_info?.phone || '',
             'Address': s.contact_info?.address || '',
-            'Batch ID': batchMap.get(s.batch_id?.toString())?.custom_id || ''
-        }));
-        if (stdStudentsData.length) {
-            const stdStudentsCsv = parser(Object.keys(stdStudentsData[0])).parse(stdStudentsData);
-            archive.append(stdStudentsCsv, { name: `students/${standard}.csv` });
+            'Batch ID': batch.custom_id
+          }));
+          const studentsCsv = parser(Object.keys(studentsData[0])).parse(studentsData);
+          archive.append(studentsCsv, { name: path.join('students', std, `${batch.name}.csv`) });
         }
-        
-        // Fees CSV for standard
-        const stdFeesData = dataByStandard[standard].fees.map((f, i) => ({
-             'Student ID': f.student.custom_id,
-             'Name': f.student.name,
-             'Amount': f.amount,
-             'Mode': f.mode,
-             'Date': f.date?.toISOString().slice(0, 10),
-             'Verified': f.verified,
-             'Note': f.note || ''
-        }));
-         if (stdFeesData.length) {
-            const stdFeesCsv = parser(Object.keys(stdFeesData[0])).parse(stdFeesData);
-            archive.append(stdFeesCsv, { name: `fees/${standard}.csv` });
+        // Fees CSV
+        if (batch.fees && batch.fees.length) {
+          // For each student in this batch, calculate total, paid, remaining, last payment
+          const studentFeeMap = {};
+          batch.fees.forEach(f => {
+            const sid = f.student.custom_id;
+            if (!studentFeeMap[sid]) studentFeeMap[sid] = [];
+            studentFeeMap[sid].push(f);
+          });
+          const feesData = Object.entries(studentFeeMap).map(([sid, payments], i) => {
+            const s = payments[0].student;
+            const totalFee = tuition.fees_structure.find(fee => fee.standard === std)?.total_fee || 0;
+            const paidFee = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+            const remainingFee = totalFee - paidFee;
+            const lastPayment = payments.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+            return {
+              'Roll No': i + 1,
+              'Student ID': s.custom_id,
+              'Name': s.name,
+              'Total Fee': totalFee,
+              'Paid Fee': paidFee,
+              'Remaining Fee': remainingFee,
+              'Last Payment Date': lastPayment ? lastPayment.date?.toISOString().slice(0, 10) : 'N/A',
+              'Last Payment Mode': lastPayment ? lastPayment.mode : 'N/A',
+              'Note': lastPayment && lastPayment.note ? lastPayment.note : null
+            };
+          });
+          const feesCsv = parser(Object.keys(feesData[0])).parse(feesData);
+          archive.append(feesCsv, { name: path.join('fees', std, `${batch.name}.csv`) });
         }
-
-        // Attendance CSV for standard
-        const stdAttData = dataByStandard[standard].attendance.map((a, i) => ({
-            'Student ID': a.student.custom_id,
-            'Name': a.student.name,
-            'Batch ID': batchMap.get(a.batch_id?.toString())?.custom_id || '',
-            'Date': a.date?.toISOString().slice(0, 10),
-            'Status': a.status,
-            'Marked By': userMap.get(a.marked_by?.toString())?.name || ''
-        }));
-        if (stdAttData.length) {
-            const stdAttCsv = parser(Object.keys(stdAttData[0])).parse(stdAttData);
-            archive.append(stdAttCsv, { name: `attendance/${standard}.csv` });
+        // Attendance CSVs (date-wise)
+        if (batch.attendance) {
+          for (const dateStr in batch.attendance) {
+            const attData = batch.attendance[dateStr].map((a, i) => ({
+              'Roll No': i + 1,
+              'Student ID': a.student.custom_id,
+              'Name': a.student.name,
+              'Batch ID': batch.custom_id,
+              'Date': dateStr,
+              'Status': a.status,
+              'Marked By': userMap.get(a.marked_by?.toString())?.name || '',
+              'Note': a.note ? a.note : null
+            }));
+            const attCsv = parser(Object.keys(attData[0])).parse(attData);
+            archive.append(attCsv, { name: path.join('attendance', std, batch.name, `${dateStr}.csv`) });
+          }
         }
+      }
     }
-
     archive.finalize();
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
