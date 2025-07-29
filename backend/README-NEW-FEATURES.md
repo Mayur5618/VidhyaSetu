@@ -77,9 +77,8 @@ Content-Type: application/json
 
 {
   "tuition_id": "YOUR_TUITION_ID",
-  "student_id": "STUDENT_ID",
-  "amount": 5000,
-  "mode": "cash",               // cash, online, upi, bank_transfer
+  "standard": "10th",           // Optional: restrict to specific standard
+  "batch_name": "Morning",      // Optional: restrict to specific batch
   "expires_in": 1               // Days until link expires (default: 1)
 }
 ```
@@ -89,10 +88,10 @@ Content-Type: application/json
 {
   "success": true,
   "payment_url": "http://localhost:3000/payment?token=xyz789...",
-  "student_name": "Rahul Kumar",
-  "amount": 5000,
+  "standard": "10th",
+  "batch_name": "Morning",
   "expires_at": "2025-01-14T10:00:00.000Z",
-  "instructions": "Share this link with Rahul Kumar to verify payment"
+  "instructions": "Share this link with 10th students for payment verification"
 }
 ```
 
@@ -194,12 +193,24 @@ GET /verify/payment-token/:token
 ```json
 {
   "valid": true,
-  "student": {
-    "name": "Rahul Kumar",
-    "standard": "10th"
+  "tuition": {
+    "name": "ABC Tuition Center",
+    "address": "123 Education Street"
   },
-  "amount": 5000,
-  "mode": "cash",
+  "standard": "10th",
+  "batch_name": "Morning",
+  "students": [
+    {
+      "name": "Rahul Kumar",
+      "custom_id": "STU-1",
+      "standard": "10th"
+    },
+    {
+      "name": "Priya Sharma",
+      "custom_id": "STU-2", 
+      "standard": "10th"
+    }
+  ],
   "expires_at": "2025-01-14T10:00:00.000Z"
 }
 ```
@@ -244,9 +255,8 @@ curl -X POST http://localhost:4000/generate/payment-link \
   -H "Content-Type: application/json" \
   -d '{
     "tuition_id": "YOUR_TUITION_ID",
-    "student_id": "STUDENT_ID",
-    "amount": 5000,
-    "mode": "cash"
+    "standard": "10th",
+    "batch_name": "Morning"
   }'
 ```
 
@@ -326,14 +336,14 @@ Contact: 9876543210
 ```
 💰 Fee Payment Verification
 
-Student: Rahul Kumar
-Amount: ₹5000
-Mode: Cash
+ABC Tuition Center - 10th Standard
+Batch: Morning
 
-Click to confirm payment:
+Click to confirm your payment:
 [PAYMENT_LINK]
 
 Expires: 24 hours
+Contact: 9876543210
 ```
 
 ### Best Practices

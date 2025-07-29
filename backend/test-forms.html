@@ -228,29 +228,25 @@
 
             <hr style="margin: 30px 0;">
 
-            <h3>Generate Payment Link</h3>
+            <h3>Generate Payment Link (Group)</h3>
             <form id="payLinkForm">
                 <div class="form-group">
                     <label for="payLinkTuitionId">Tuition ID:</label>
                     <input type="text" id="payLinkTuitionId" required placeholder="Enter tuition ID">
                 </div>
                 <div class="form-group">
-                    <label for="payLinkStudentId">Student ID:</label>
-                    <input type="text" id="payLinkStudentId" required placeholder="Enter student ID">
-                </div>
-                <div class="form-group">
-                    <label for="payLinkAmount">Amount:</label>
-                    <input type="number" id="payLinkAmount" required placeholder="Enter amount" step="0.01">
-                </div>
-                <div class="form-group">
-                    <label for="payLinkMode">Payment Mode:</label>
-                    <select id="payLinkMode" required>
-                        <option value="">Select Mode</option>
-                        <option value="cash">Cash</option>
-                        <option value="online">Online</option>
-                        <option value="upi">UPI</option>
-                        <option value="bank_transfer">Bank Transfer</option>
+                    <label for="payLinkStandard">Standard (Optional):</label>
+                    <select id="payLinkStandard">
+                        <option value="">All Standards</option>
+                        <option value="9th">9th</option>
+                        <option value="10th">10th</option>
+                        <option value="11th">11th</option>
+                        <option value="12th">12th</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label for="payLinkBatch">Batch Name (Optional):</label>
+                    <input type="text" id="payLinkBatch" placeholder="e.g., Morning, Evening">
                 </div>
                 <div class="form-group">
                     <label for="payLinkExpires">Expires In (Days):</label>
@@ -448,9 +444,8 @@
                     },
                     body: JSON.stringify({
                         tuition_id: document.getElementById('payLinkTuitionId').value,
-                        student_id: document.getElementById('payLinkStudentId').value,
-                        amount: document.getElementById('payLinkAmount').value,
-                        mode: document.getElementById('payLinkMode').value,
+                        standard: document.getElementById('payLinkStandard').value,
+                        batch_name: document.getElementById('payLinkBatch').value,
                         expires_in: parseInt(document.getElementById('payLinkExpires').value)
                     })
                 });
@@ -462,8 +457,8 @@
                         <div class="result success">
                             <strong>✅ Payment Link Generated!</strong><br>
                             <a href="${data.payment_url}" target="_blank">${data.payment_url}</a><br>
-                            Student: ${data.student_name}<br>
-                            Amount: ₹${data.amount}<br>
+                            Standard: ${data.standard}<br>
+                            Batch: ${data.batch_name}<br>
                             Expires: ${new Date(data.expires_at).toLocaleString()}<br>
                             Instructions: ${data.instructions}
                         </div>

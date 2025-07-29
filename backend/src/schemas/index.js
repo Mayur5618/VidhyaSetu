@@ -119,6 +119,24 @@ const typeDefs = gql`
     updatedAt: String
   }
 
+  type Notification {
+    id: ID!
+    tuition_id: ID!
+    user_id: ID!
+    title: String!
+    message: String!
+    type: String!
+    related_id: ID
+    related_type: String
+    is_read: Boolean!
+    priority: String!
+    action_url: String
+    expires_at: String
+    metadata: String
+    created_at: String!
+    updated_at: String!
+  }
+
   type Query {
     users: [User]
     user(id: ID!): User
@@ -132,6 +150,8 @@ const typeDefs = gql`
     attendance(batch_id: ID!, date: String): [Attendance]
     feePayments(student_id: ID, tuition_id: ID): [FeePayment]
     papers(tuition_id: ID, standard: String): [Paper]
+    notifications(tuition_id: ID, limit: Int, skip: Int): [Notification]
+    unreadNotificationCount(tuition_id: ID): Int
   }
 
   type Mutation {
@@ -158,6 +178,9 @@ const typeDefs = gql`
     deleteFeePayment(id: ID!): FeePayment
     updateAttendance(id: ID!, data: AttendanceUpdateInput!): Attendance
     deleteAttendance(id: ID!): Attendance
+    markNotificationAsRead(id: ID!): Notification
+    markAllNotificationsAsRead(tuition_id: ID): Int
+    deleteNotification(id: ID!): Boolean
   }
 
   input ScheduleInput {

@@ -6,6 +6,7 @@ import Attendance from '../models/Attendance.js';
 import FeePayment from '../models/FeePayment.js';
 import Paper from '../models/Paper.js';
 import Counter from '../models/Counter.js';
+import Notification from '../models/Notification.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -47,6 +48,21 @@ const resolvers = {
       if (tuition_id) query.tuition_id = tuition_id;
       if (standard) query.standard = standard;
       return await Paper.find(query);
+    },
+    notifications: async (_, { tuition_id, limit = 50, skip = 0 }, { user }) => {
+      if (!user) throw new Error('Not authenticated');
+      const query = { user_id: user.userId };
+      if (tuition_id) query.tuition_id = tuition_id;
+      return await Notification.find(query)
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .skip(skip);
+    },
+    unreadNotificationCount: async (_, { tuition_id }, { user }) => {
+      if (!user) throw new Error('Not authenticated');
+      const query = { user_id: user.userId, is_read: false };
+      if (tuition_id) query.tuition_id = tuition_id;
+      return await Notification.countDocuments(query);
     },
   },
   Student: {
@@ -229,6 +245,28 @@ const resolvers = {
     deleteAttendance: async (_, { id }, { user }) => {
       if (!user) throw new Error('Not authenticated');
       return await Attendance.findByIdAndDelete(id);
+    },
+    markNotificationAsRead: async (_, { id }, { user }) => {
+      if (!user) throw new Error('Not authenticated');
+      const notification = await Notification.findOneAndUpdate(
+        { _id: id, user_id: user.userId },
+        { is_read: true },
+        { new: true }
+      );
+      if (!notification) throw new Error('Notification not found');
+      return notification;
+    },
+    markAllNotificationsAsRead: async (_, { tuition_id }, { user }) => {
+      if (!user) throw new Error('Not authenticated');
+      const query = { user_id: user.userId, is_read: false };
+      if (tuition_id) query.tuition_id = tuition_id;
+      const result = await Notification.updateMany(query, { is_read: true });
+      return result.modifiedCount;
+    },
+    deleteNotification: async (_, { id }, { user }) => {
+      if (!user) throw new Error('Not authenticated');
+      const notification = await Notification.findOneAndDelete({ _id: id, user_id: user.userId });
+      return !!notification;
     },
   },
 };

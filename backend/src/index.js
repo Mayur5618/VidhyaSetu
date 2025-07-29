@@ -15,6 +15,7 @@ import Attendance from './models/Attendance.js';
 import User from './models/User.js';
 import Paper from './models/Paper.js';
 import Counter from './models/Counter.js';
+import Notification from './models/Notification.js';
 import archiver from 'archiver';
 import path from 'path';
 
@@ -22,6 +23,13 @@ import typeDefs from './schemas/index.js';
 import resolvers from './resolvers/index.js';
 import { getUserFromToken } from './utils/auth.js';
 import cloudinary from './utils/cloudinary.js';
+import { 
+  createNotification, 
+  getUnreadCount, 
+  markAsRead, 
+  markAllAsRead, 
+  getUserNotifications 
+} from './utils/notifications.js';
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -37,6 +45,11 @@ app.use(express.static('.'));
 // Test forms page
 app.get('/test', (req, res) => {
   res.sendFile('test-forms.html', { root: '.' });
+});
+
+// Notification test page
+app.get('/notifications-test', (req, res) => {
+  res.sendFile('notification-test.html', { root: '.' });
 });
 
 app.post('/upload', upload.single('file'), (req, res) => {
@@ -767,6 +780,24 @@ app.post('/register/student', async (req, res) => {
       await batch.save();
     }
 
+    // Create notification for tuition owner
+    try {
+      await createNotification({
+        tuition_id,
+        user_id: tuition.owner_id,
+        title: 'New Student Registered',
+        message: `${student.name} (${student.standard}) has registered via self-registration link`,
+        type: 'student_registered',
+        related_id: student._id,
+        related_type: 'student',
+        priority: 'medium',
+        action_url: `/students/${student._id}`
+      });
+    } catch (notifError) {
+      console.error('Error creating notification:', notifError);
+      // Don't fail the registration if notification fails
+    }
+
     res.json({ 
       success: true, 
       message: 'Student registered successfully!',
@@ -784,7 +815,7 @@ app.post('/register/student', async (req, res) => {
   }
 });
 
-// ===== PAYMENT VERIFICATION SYSTEM =====
+// ===== PAYMENT VERIFICATION SYSTEM (GROUP) =====
 app.post('/payment/verify', async (req, res) => {
   try {
     const { 
@@ -837,6 +868,24 @@ app.post('/payment/verify', async (req, res) => {
       verified_by: null,
       verified_at: null
     });
+
+    // Create notification for tuition owner
+    try {
+      await createNotification({
+        tuition_id,
+        user_id: tuition.owner_id,
+        title: 'Payment Pending Verification',
+        message: `${student.name} has submitted a payment of ₹${amount} (${mode}) for verification`,
+        type: 'payment_pending',
+        related_id: payment._id,
+        related_type: 'payment',
+        priority: 'high',
+        action_url: `/payments/${payment._id}`
+      });
+    } catch (notifError) {
+      console.error('Error creating notification:', notifError);
+      // Don't fail the payment if notification fails
+    }
 
     res.json({ 
       success: true, 
@@ -909,24 +958,19 @@ app.post('/generate/registration-link', async (req, res) => {
   }
 });
 
-// ===== GENERATE PAYMENT LINK =====
+// ===== GENERATE PAYMENT LINK (GROUP) =====
 app.post('/generate/payment-link', async (req, res) => {
   try {
-    const { tuition_id, student_id, amount, mode, expires_in = 1 } = req.body; // expires_in days
+    const { tuition_id, standard, batch_name, expires_in = 1 } = req.body; // expires_in days
 
-    if (!tuition_id || !student_id || !amount) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!tuition_id) {
+      return res.status(400).json({ error: 'Tuition ID required' });
     }
 
-    // Verify tuition and student exist
+    // Verify tuition exists
     const tuition = await Tuition.findById(tuition_id);
     if (!tuition) {
       return res.status(404).json({ error: 'Tuition not found' });
-    }
-
-    const student = await Student.findById(student_id);
-    if (!student || student.tuition_id.toString() !== tuition_id) {
-      return res.status(404).json({ error: 'Student not found in this tuition' });
     }
 
     // Generate unique token
@@ -936,16 +980,15 @@ app.post('/generate/payment-link', async (req, res) => {
     const expires_at = new Date();
     expires_at.setDate(expires_at.getDate() + expires_in);
 
-    // Store payment link data
+    // Store payment link data (group link)
     const paymentLink = {
       token,
       tuition_id,
-      student_id,
-      amount: parseFloat(amount),
-      mode,
+      standard,
+      batch_name,
       expires_at,
       created_at: new Date(),
-      used: false
+      used_count: 0
     };
 
     // Store in memory (in production, use Redis or database)
@@ -958,10 +1001,10 @@ app.post('/generate/payment-link', async (req, res) => {
     res.json({
       success: true,
       payment_url: paymentUrl,
-      student_name: student.name,
-      amount: amount,
+      standard: standard || 'All Standards',
+      batch_name: batch_name || 'All Batches',
       expires_at: expires_at.toISOString(),
-      instructions: `Share this link with ${student.name} to verify payment`
+      instructions: `Share this link with ${standard || 'all'} students for payment verification`
     });
 
   } catch (err) {
@@ -1007,7 +1050,7 @@ app.get('/verify/registration-token/:token', async (req, res) => {
   }
 });
 
-// ===== VERIFY PAYMENT TOKEN =====
+// ===== VERIFY PAYMENT TOKEN (GROUP) =====
 app.get('/verify/payment-token/:token', async (req, res) => {
   try {
     const { token } = req.params;
@@ -1021,29 +1064,188 @@ app.get('/verify/payment-token/:token', async (req, res) => {
       return res.status(400).json({ error: 'Link has expired' });
     }
 
-    if (link.used) {
-      return res.status(400).json({ error: 'Payment link already used' });
+    // Get tuition details
+    const tuition = await Tuition.findById(link.tuition_id);
+    if (!tuition) {
+      return res.status(404).json({ error: 'Tuition not found' });
     }
 
-    // Get student details
-    const student = await Student.findById(link.student_id);
-    if (!student) {
-      return res.status(404).json({ error: 'Student not found' });
+    // Get students for this tuition/standard/batch
+    let studentsQuery = { tuition_id: link.tuition_id };
+    if (link.standard) {
+      studentsQuery.standard = link.standard;
     }
+    if (link.batch_name) {
+      const batch = await Batch.findOne({ 
+        tuition_id: link.tuition_id, 
+        name: link.batch_name 
+      });
+      if (batch) {
+        studentsQuery.batch_id = batch._id;
+      }
+    }
+
+    const students = await Student.find(studentsQuery).select('name custom_id standard');
 
     res.json({
       valid: true,
-      student: {
-        name: student.name,
-        standard: student.standard
+      tuition: {
+        name: tuition.name,
+        address: tuition.address
       },
-      amount: link.amount,
-      mode: link.mode,
+      standard: link.standard,
+      batch_name: link.batch_name,
+      students: students,
       expires_at: link.expires_at
     });
 
   } catch (err) {
     console.error('Payment token verification error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== NOTIFICATION SYSTEM =====
+
+// Get unread notification count
+app.get('/notifications/count', async (req, res) => {
+  try {
+    const token = req.headers.authorization || '';
+    const user = getUserFromToken(token);
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { tuition_id } = req.query;
+    const count = await getUnreadCount(user.userId, tuition_id);
+    
+    res.json({ count });
+  } catch (err) {
+    console.error('Error getting notification count:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get user notifications
+app.get('/notifications', async (req, res) => {
+  try {
+    const token = req.headers.authorization || '';
+    const user = getUserFromToken(token);
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { tuition_id, limit = 50, skip = 0 } = req.query;
+    const notifications = await getUserNotifications(user.userId, tuition_id, parseInt(limit), parseInt(skip));
+    
+    res.json({ notifications });
+  } catch (err) {
+    console.error('Error getting notifications:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Mark notification as read
+app.put('/notifications/:id/read', async (req, res) => {
+  try {
+    const token = req.headers.authorization || '';
+    const user = getUserFromToken(token);
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { id } = req.params;
+    const notification = await markAsRead(id, user.userId);
+    
+    if (!notification) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+    
+    res.json({ success: true, notification });
+  } catch (err) {
+    console.error('Error marking notification as read:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Mark all notifications as read
+app.put('/notifications/read-all', async (req, res) => {
+  try {
+    const token = req.headers.authorization || '';
+    const user = getUserFromToken(token);
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { tuition_id } = req.body;
+    const count = await markAllAsRead(user.userId, tuition_id);
+    
+    res.json({ success: true, marked_count: count });
+  } catch (err) {
+    console.error('Error marking all notifications as read:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete notification
+app.delete('/notifications/:id', async (req, res) => {
+  try {
+    const token = req.headers.authorization || '';
+    const user = getUserFromToken(token);
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { id } = req.params;
+    const notification = await Notification.findOneAndDelete({ _id: id, user_id: user.userId });
+    
+    if (!notification) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+    
+    res.json({ success: true, message: 'Notification deleted' });
+  } catch (err) {
+    console.error('Error deleting notification:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create test notification
+app.post('/notifications/test', async (req, res) => {
+  try {
+    const token = req.headers.authorization || '';
+    const user = getUserFromToken(token);
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { type, title, message, priority = 'medium' } = req.body;
+
+    // Get user's tuition (assuming tuition owner)
+    const tuition = await Tuition.findOne({ owner_id: user.userId });
+    if (!tuition) {
+      return res.status(404).json({ error: 'No tuition found for this user' });
+    }
+
+    const notification = await createNotification({
+      tuition_id: tuition._id,
+      user_id: user.userId,
+      title,
+      message,
+      type,
+      priority,
+      action_url: null
+    });
+
+    res.json({ success: true, notification });
+  } catch (err) {
+    console.error('Error creating test notification:', err);
     res.status(500).json({ error: err.message });
   }
 });
