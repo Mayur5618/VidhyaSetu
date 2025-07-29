@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VidhyaSetu - Test Forms</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        .success {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background-color: #e9ecef;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px 5px 0 0;
+        }
+        .tab.active {
+            background-color: white;
+            border-bottom: 2px solid #007bff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎓 VidhyaSetu - Test Forms</h1>
+    
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('registration')">Student Registration</button>
+        <button class="tab" onclick="showTab('payment')">Payment Verification</button>
+        <button class="tab" onclick="showTab('generate')">Generate Links</button>
+    </div>
+
+    <!-- Student Registration Form -->
+    <div id="registration" class="tab-content active">
+        <div class="container">
+            <h2>📝 Student Self-Registration</h2>
+            <form id="registrationForm">
+                <div class="form-group">
+                    <label for="regTuitionId">Tuition ID:</label>
+                    <input type="text" id="regTuitionId" required placeholder="Enter tuition ID">
+                </div>
+                <div class="form-group">
+                    <label for="regName">Student Name:</label>
+                    <input type="text" id="regName" required placeholder="Enter student name">
+                </div>
+                <div class="form-group">
+                    <label for="regPhone">Phone Number:</label>
+                    <input type="tel" id="regPhone" required placeholder="Enter phone number">
+                </div>
+                <div class="form-group">
+                    <label for="regAddress">Address:</label>
+                    <textarea id="regAddress" rows="3" placeholder="Enter address"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="regStandard">Standard:</label>
+                    <select id="regStandard" required>
+                        <option value="">Select Standard</option>
+                        <option value="9th">9th</option>
+                        <option value="10th">10th</option>
+                        <option value="11th">11th</option>
+                        <option value="12th">12th</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="regBatch">Batch Name (Optional):</label>
+                    <input type="text" id="regBatch" placeholder="e.g., Morning, Evening, etc.">
+                </div>
+                <div class="form-group">
+                    <label for="regParentName">Parent Name:</label>
+                    <input type="text" id="regParentName" placeholder="Enter parent name">
+                </div>
+                <div class="form-group">
+                    <label for="regParentPhone">Parent Phone:</label>
+                    <input type="tel" id="regParentPhone" placeholder="Enter parent phone">
+                </div>
+                <button type="submit">Register Student</button>
+            </form>
+            <div id="registrationResult"></div>
+        </div>
+    </div>
+
+    <!-- Payment Verification Form -->
+    <div id="payment" class="tab-content">
+        <div class="container">
+            <h2>💰 Payment Verification</h2>
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label for="payTuitionId">Tuition ID:</label>
+                    <input type="text" id="payTuitionId" required placeholder="Enter tuition ID">
+                </div>
+                <div class="form-group">
+                    <label for="payStudentId">Student ID:</label>
+                    <input type="text" id="payStudentId" required placeholder="Enter student ID">
+                </div>
+                <div class="form-group">
+                    <label for="payAmount">Amount:</label>
+                    <input type="number" id="payAmount" required placeholder="Enter amount" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="payMode">Payment Mode:</label>
+                    <select id="payMode" required>
+                        <option value="">Select Mode</option>
+                        <option value="cash">Cash</option>
+                        <option value="online">Online</option>
+                        <option value="upi">UPI</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="payDate">Payment Date:</label>
+                    <input type="date" id="payDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="payNote">Note (Optional):</label>
+                    <textarea id="payNote" rows="3" placeholder="Any additional notes"></textarea>
+                </div>
+                <button type="submit">Submit Payment</button>
+            </form>
+            <div id="paymentResult"></div>
+        </div>
+    </div>
+
+    <!-- Generate Links -->
+    <div id="generate" class="tab-content">
+        <div class="container">
+            <h2>🔗 Generate Links</h2>
+            
+            <h3>Generate Registration Link</h3>
+            <form id="regLinkForm">
+                <div class="form-group">
+                    <label for="linkTuitionId">Tuition ID:</label>
+                    <input type="text" id="linkTuitionId" required placeholder="Enter tuition ID">
+                </div>
+                <div class="form-group">
+                    <label for="linkStandard">Standard (Optional):</label>
+                    <select id="linkStandard">
+                        <option value="">All Standards</option>
+                        <option value="9th">9th</option>
+                        <option value="10th">10th</option>
+                        <option value="11th">11th</option>
+                        <option value="12th">12th</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="linkBatch">Batch Name (Optional):</label>
+                    <input type="text" id="linkBatch" placeholder="e.g., Morning, Evening">
+                </div>
+                <div class="form-group">
+                    <label for="linkExpires">Expires In (Days):</label>
+                    <input type="number" id="linkExpires" value="7" min="1" max="30">
+                </div>
+                <button type="submit">Generate Registration Link</button>
+            </form>
+            <div id="regLinkResult"></div>
+
+            <hr style="margin: 30px 0;">
+
+            <h3>Generate Payment Link</h3>
+            <form id="payLinkForm">
+                <div class="form-group">
+                    <label for="payLinkTuitionId">Tuition ID:</label>
+                    <input type="text" id="payLinkTuitionId" required placeholder="Enter tuition ID">
+                </div>
+                <div class="form-group">
+                    <label for="payLinkStudentId">Student ID:</label>
+                    <input type="text" id="payLinkStudentId" required placeholder="Enter student ID">
+                </div>
+                <div class="form-group">
+                    <label for="payLinkAmount">Amount:</label>
+                    <input type="number" id="payLinkAmount" required placeholder="Enter amount" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="payLinkMode">Payment Mode:</label>
+                    <select id="payLinkMode" required>
+                        <option value="">Select Mode</option>
+                        <option value="cash">Cash</option>
+                        <option value="online">Online</option>
+                        <option value="upi">UPI</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="payLinkExpires">Expires In (Days):</label>
+                    <input type="number" id="payLinkExpires" value="1" min="1" max="7">
+                </div>
+                <button type="submit">Generate Payment Link</button>
+            </form>
+            <div id="payLinkResult"></div>
+        </div>
+    </div>
+
+    <script>
+        // Set default date to today
+        document.getElementById('payDate').value = new Date().toISOString().split('T')[0];
+
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // Student Registration Form
+        document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const resultDiv = document.getElementById('registrationResult');
+            
+            try {
+                const response = await fetch('/register/student', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        tuition_id: document.getElementById('regTuitionId').value,
+                        name: document.getElementById('regName').value,
+                        phone: document.getElementById('regPhone').value,
+                        address: document.getElementById('regAddress').value,
+                        standard: document.getElementById('regStandard').value,
+                        batch_name: document.getElementById('regBatch').value,
+                        parent_name: document.getElementById('regParentName').value,
+                        parent_phone: document.getElementById('regParentPhone').value
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <strong>✅ Success!</strong><br>
+                            ${data.message}<br>
+                            Student ID: ${data.student.custom_id}<br>
+                            Batch: ${data.student.batch}
+                        </div>
+                    `;
+                    document.getElementById('registrationForm').reset();
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <strong>❌ Error:</strong><br>
+                            ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>❌ Network Error:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        });
+
+        // Payment Verification Form
+        document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const resultDiv = document.getElementById('paymentResult');
+            
+            try {
+                const response = await fetch('/payment/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        tuition_id: document.getElementById('payTuitionId').value,
+                        student_id: document.getElementById('payStudentId').value,
+                        amount: document.getElementById('payAmount').value,
+                        mode: document.getElementById('payMode').value,
+                        date: document.getElementById('payDate').value,
+                        note: document.getElementById('payNote').value
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <strong>✅ Success!</strong><br>
+                            ${data.message}<br>
+                            Payment ID: ${data.payment.id}<br>
+                            Status: ${data.payment.status}
+                        </div>
+                    `;
+                    document.getElementById('paymentForm').reset();
+                    document.getElementById('payDate').value = new Date().toISOString().split('T')[0];
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <strong>❌ Error:</strong><br>
+                            ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>❌ Network Error:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        });
+
+        // Generate Registration Link
+        document.getElementById('regLinkForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const resultDiv = document.getElementById('regLinkResult');
+            
+            try {
+                const response = await fetch('/generate/registration-link', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        tuition_id: document.getElementById('linkTuitionId').value,
+                        standard: document.getElementById('linkStandard').value,
+                        batch_name: document.getElementById('linkBatch').value,
+                        expires_in: parseInt(document.getElementById('linkExpires').value)
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <strong>✅ Registration Link Generated!</strong><br>
+                            <a href="${data.registration_url}" target="_blank">${data.registration_url}</a><br>
+                            Expires: ${new Date(data.expires_at).toLocaleString()}<br>
+                            Instructions: ${data.instructions}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <strong>❌ Error:</strong><br>
+                            ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>❌ Network Error:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        });
+
+        // Generate Payment Link
+        document.getElementById('payLinkForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const resultDiv = document.getElementById('payLinkResult');
+            
+            try {
+                const response = await fetch('/generate/payment-link', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        tuition_id: document.getElementById('payLinkTuitionId').value,
+                        student_id: document.getElementById('payLinkStudentId').value,
+                        amount: document.getElementById('payLinkAmount').value,
+                        mode: document.getElementById('payLinkMode').value,
+                        expires_in: parseInt(document.getElementById('payLinkExpires').value)
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <strong>✅ Payment Link Generated!</strong><br>
+                            <a href="${data.payment_url}" target="_blank">${data.payment_url}</a><br>
+                            Student: ${data.student_name}<br>
+                            Amount: ₹${data.amount}<br>
+                            Expires: ${new Date(data.expires_at).toLocaleString()}<br>
+                            Instructions: ${data.instructions}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <strong>❌ Error:</strong><br>
+                            ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>❌ Network Error:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html> 

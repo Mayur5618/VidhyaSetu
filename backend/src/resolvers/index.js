@@ -128,7 +128,10 @@ const resolvers = {
         mode,
         date: new Date(date),
         note,
-        verified: false
+        status: 'verified', // Manual payments are auto-verified
+        verified_by: user.userId,
+        verified_at: new Date(),
+        payment_source: 'manual'
       });
       return await payment.save();
     },
@@ -139,10 +142,34 @@ const resolvers = {
       }
       const payment = await FeePayment.findById(id);
       if (!payment) throw new Error('Payment not found');
-      payment.verified = true;
+      payment.status = 'verified';
       payment.verified_by = user.userId;
+      payment.verified_at = new Date();
       await payment.save();
       return payment;
+    },
+    rejectFeePayment: async (_, { id }, { user }) => {
+      if (!user) throw new Error('Not authenticated');
+      if (!(user.role === 'tuition_owner' || user.role === 'admin')) {
+        throw new Error('Not authorized to reject payments');
+      }
+      const payment = await FeePayment.findById(id);
+      if (!payment) throw new Error('Payment not found');
+      payment.status = 'rejected';
+      payment.verified_by = user.userId;
+      payment.verified_at = new Date();
+      await payment.save();
+      return payment;
+    },
+    getPendingPayments: async (_, { tuition_id }, { user }) => {
+      if (!user) throw new Error('Not authenticated');
+      if (!(user.role === 'tuition_owner' || user.role === 'admin')) {
+        throw new Error('Not authorized to view pending payments');
+      }
+      return await FeePayment.find({ 
+        tuition_id, 
+        status: 'pending' 
+      }).populate('student_id', 'name custom_id');
     },
     uploadPaper: async (_, { tuition_id, standard, title, file_url }, { user }) => {
       if (!user) throw new Error('Not authenticated');

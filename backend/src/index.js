@@ -14,6 +14,7 @@ import Tuition from './models/Tuition.js';
 import Attendance from './models/Attendance.js';
 import User from './models/User.js';
 import Paper from './models/Paper.js';
+import Counter from './models/Counter.js';
 import archiver from 'archiver';
 import path from 'path';
 
@@ -25,6 +26,18 @@ import cloudinary from './utils/cloudinary.js';
 const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static files
+app.use(express.static('.'));
+
+// Test forms page
+app.get('/test', (req, res) => {
+  res.sendFile('test-forms.html', { root: '.' });
+});
 
 app.post('/upload', upload.single('file'), (req, res) => {
   try {
@@ -669,6 +682,368 @@ app.get('/report/backup', async (req, res) => {
     archive.finalize();
   } catch (err) {
     console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== STUDENT SELF-REGISTRATION SYSTEM =====
+app.post('/register/student', async (req, res) => {
+  try {
+    const { 
+      tuition_id, 
+      name, 
+      phone, 
+      address, 
+      standard, 
+      batch_name,
+      parent_name,
+      parent_phone,
+      registration_source = 'self_registration'
+    } = req.body;
+
+    if (!tuition_id || !name || !phone || !standard) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Verify tuition exists
+    const tuition = await Tuition.findById(tuition_id);
+    if (!tuition) {
+      return res.status(404).json({ error: 'Tuition not found' });
+    }
+
+    // Check if student already exists
+    const existingStudent = await Student.findOne({ 
+      tuition_id, 
+      'contact_info.phone': phone 
+    });
+    if (existingStudent) {
+      return res.status(400).json({ error: 'Student with this phone already exists' });
+    }
+
+    // Find or create batch
+    let batch = null;
+    if (batch_name) {
+      batch = await Batch.findOne({ 
+        tuition_id, 
+        name: batch_name,
+        standard 
+      });
+      if (!batch) {
+        // Create new batch if doesn't exist
+        const batchNumber = await Counter.getNextSequence('batch');
+        batch = await Batch.create({
+          custom_id: `BATCH-${batchNumber}`,
+          name: batch_name,
+          standard,
+          tuition_id,
+          schedule: [],
+          teacher_ids: [tuition.owner_id],
+          student_ids: []
+        });
+      }
+    }
+
+    // Create student
+    const studentNumber = await Counter.getNextSequence('student');
+    const student = await Student.create({
+      custom_id: `STU-${studentNumber}`,
+      name,
+      contact_info: {
+        phone,
+        address: address || '',
+        parent_name: parent_name || '',
+        parent_phone: parent_phone || ''
+      },
+      standard,
+      tuition_id,
+      batch_id: batch?._id,
+      registration_source,
+      photo_url: null
+    });
+
+    // Add student to batch if batch exists
+    if (batch) {
+      batch.student_ids.push(student._id);
+      await batch.save();
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Student registered successfully!',
+      student: {
+        id: student._id,
+        custom_id: student.custom_id,
+        name: student.name,
+        batch: batch?.name || 'Not assigned'
+      }
+    });
+
+  } catch (err) {
+    console.error('Student registration error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== PAYMENT VERIFICATION SYSTEM =====
+app.post('/payment/verify', async (req, res) => {
+  try {
+    const { 
+      tuition_id, 
+      student_id, 
+      amount, 
+      mode, 
+      date, 
+      note,
+      payment_source = 'student_verification'
+    } = req.body;
+
+    if (!tuition_id || !student_id || !amount || !mode) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Verify tuition and student exist
+    const tuition = await Tuition.findById(tuition_id);
+    if (!tuition) {
+      return res.status(404).json({ error: 'Tuition not found' });
+    }
+
+    const student = await Student.findById(student_id);
+    if (!student || student.tuition_id.toString() !== tuition_id) {
+      return res.status(404).json({ error: 'Student not found in this tuition' });
+    }
+
+    // Check if payment already exists for this date and amount
+    const existingPayment = await FeePayment.findOne({
+      student_id,
+      amount: parseFloat(amount),
+      date: new Date(date || new Date()),
+      mode
+    });
+
+    if (existingPayment) {
+      return res.status(400).json({ error: 'Similar payment already exists' });
+    }
+
+    // Create pending payment (needs verification)
+    const payment = await FeePayment.create({
+      student_id,
+      tuition_id,
+      amount: parseFloat(amount),
+      mode,
+      date: new Date(date || new Date()),
+      note: note || '',
+      status: 'pending', // Will be verified by owner
+      payment_source,
+      verified_by: null,
+      verified_at: null
+    });
+
+    res.json({ 
+      success: true, 
+      message: 'Payment submitted for verification!',
+      payment: {
+        id: payment._id,
+        amount: payment.amount,
+        mode: payment.mode,
+        date: payment.date,
+        status: payment.status
+      }
+    });
+
+  } catch (err) {
+    console.error('Payment verification error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== GENERATE REGISTRATION LINK =====
+app.post('/generate/registration-link', async (req, res) => {
+  try {
+    const { tuition_id, standard, batch_name, expires_in = 7 } = req.body; // expires_in days
+
+    if (!tuition_id) {
+      return res.status(400).json({ error: 'Tuition ID required' });
+    }
+
+    // Verify tuition exists
+    const tuition = await Tuition.findById(tuition_id);
+    if (!tuition) {
+      return res.status(404).json({ error: 'Tuition not found' });
+    }
+
+    // Generate unique token
+    const token = Math.random().toString(36).substring(2, 15) + 
+                  Math.random().toString(36).substring(2, 15);
+    
+    const expires_at = new Date();
+    expires_at.setDate(expires_at.getDate() + expires_in);
+
+    // Store in database (we'll create a simple model for this)
+    const registrationLink = {
+      token,
+      tuition_id,
+      standard,
+      batch_name,
+      expires_at,
+      created_at: new Date(),
+      used_count: 0
+    };
+
+    // For now, store in memory (in production, use Redis or database)
+    global.registrationLinks = global.registrationLinks || {};
+    global.registrationLinks[token] = registrationLink;
+
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+    const registrationUrl = `${baseUrl}/register?token=${token}`;
+
+    res.json({
+      success: true,
+      registration_url: registrationUrl,
+      expires_at: expires_at.toISOString(),
+      instructions: `Share this link with ${standard || 'all'} students for registration`
+    });
+
+  } catch (err) {
+    console.error('Link generation error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== GENERATE PAYMENT LINK =====
+app.post('/generate/payment-link', async (req, res) => {
+  try {
+    const { tuition_id, student_id, amount, mode, expires_in = 1 } = req.body; // expires_in days
+
+    if (!tuition_id || !student_id || !amount) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Verify tuition and student exist
+    const tuition = await Tuition.findById(tuition_id);
+    if (!tuition) {
+      return res.status(404).json({ error: 'Tuition not found' });
+    }
+
+    const student = await Student.findById(student_id);
+    if (!student || student.tuition_id.toString() !== tuition_id) {
+      return res.status(404).json({ error: 'Student not found in this tuition' });
+    }
+
+    // Generate unique token
+    const token = Math.random().toString(36).substring(2, 15) + 
+                  Math.random().toString(36).substring(2, 15);
+    
+    const expires_at = new Date();
+    expires_at.setDate(expires_at.getDate() + expires_in);
+
+    // Store payment link data
+    const paymentLink = {
+      token,
+      tuition_id,
+      student_id,
+      amount: parseFloat(amount),
+      mode,
+      expires_at,
+      created_at: new Date(),
+      used: false
+    };
+
+    // Store in memory (in production, use Redis or database)
+    global.paymentLinks = global.paymentLinks || {};
+    global.paymentLinks[token] = paymentLink;
+
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+    const paymentUrl = `${baseUrl}/payment?token=${token}`;
+
+    res.json({
+      success: true,
+      payment_url: paymentUrl,
+      student_name: student.name,
+      amount: amount,
+      expires_at: expires_at.toISOString(),
+      instructions: `Share this link with ${student.name} to verify payment`
+    });
+
+  } catch (err) {
+    console.error('Payment link generation error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== VERIFY REGISTRATION TOKEN =====
+app.get('/verify/registration-token/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const link = global.registrationLinks?.[token];
+    if (!link) {
+      return res.status(404).json({ error: 'Invalid or expired link' });
+    }
+
+    if (new Date() > link.expires_at) {
+      return res.status(400).json({ error: 'Link has expired' });
+    }
+
+    // Get tuition details
+    const tuition = await Tuition.findById(link.tuition_id);
+    if (!tuition) {
+      return res.status(404).json({ error: 'Tuition not found' });
+    }
+
+    res.json({
+      valid: true,
+      tuition: {
+        name: tuition.name,
+        address: tuition.address
+      },
+      standard: link.standard,
+      batch_name: link.batch_name,
+      expires_at: link.expires_at
+    });
+
+  } catch (err) {
+    console.error('Token verification error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== VERIFY PAYMENT TOKEN =====
+app.get('/verify/payment-token/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const link = global.paymentLinks?.[token];
+    if (!link) {
+      return res.status(404).json({ error: 'Invalid or expired link' });
+    }
+
+    if (new Date() > link.expires_at) {
+      return res.status(400).json({ error: 'Link has expired' });
+    }
+
+    if (link.used) {
+      return res.status(400).json({ error: 'Payment link already used' });
+    }
+
+    // Get student details
+    const student = await Student.findById(link.student_id);
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+
+    res.json({
+      valid: true,
+      student: {
+        name: student.name,
+        standard: student.standard
+      },
+      amount: link.amount,
+      mode: link.mode,
+      expires_at: link.expires_at
+    });
+
+  } catch (err) {
+    console.error('Payment token verification error:', err);
     res.status(500).json({ error: err.message });
   }
 });

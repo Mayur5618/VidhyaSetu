@@ -143,6 +143,8 @@ const typeDefs = gql`
     markAttendance(date: String!, batch_id: ID!, student_id: ID!, status: String!): Attendance
     addFeePayment(student_id: ID!, tuition_id: ID!, amount: Float!, mode: String!, date: String!, note: String): FeePayment
     verifyFeePayment(id: ID!): FeePayment
+    rejectFeePayment(id: ID!): FeePayment
+    getPendingPayments(tuition_id: ID!): [FeePayment]
     uploadPaper(tuition_id: ID!, standard: String!, title: String!, file_url: String!): Paper
     updateTuition(id: ID!, data: TuitionUpdateInput!): Tuition
     deleteTuition(id: ID!): Tuition
