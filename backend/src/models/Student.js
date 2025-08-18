@@ -21,7 +21,11 @@ const studentSchema = new mongoose.Schema({
   batch_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Batch' },
   tuition_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Tuition', required: true },
   fees_paid: [paymentSchema],
-  registration_source: { type: String }
+  registration_source: { type: String },
+  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  approved_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  approved_at: { type: Date },
+  notes: { type: String }
 }, { timestamps: true });
 
 export default mongoose.model('Student', studentSchema); 

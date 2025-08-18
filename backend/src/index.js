@@ -12,10 +12,13 @@ import Batch from './models/Batch.js';
 import FeePayment from './models/FeePayment.js';
 import Tuition from './models/Tuition.js';
 import Attendance from './models/Attendance.js';
+import AbsenceReason from './models/AbsenceReason.js';
 import User from './models/User.js';
 import Paper from './models/Paper.js';
 import Counter from './models/Counter.js';
 import Notification from './models/Notification.js';
+import ResultTemplate from './models/ResultTemplate.js';
+import Result from './models/Result.js';
 import archiver from 'archiver';
 import path from 'path';
 
@@ -30,6 +33,7 @@ import {
   markAllAsRead, 
   getUserNotifications 
 } from './utils/notifications.js';
+import { generateResultCard, generatePDFResultCard } from './utils/resultGenerator.js';
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -41,6 +45,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files
 app.use(express.static('.'));
+app.use('/public', express.static('public'));
 
 // Test forms page
 app.get('/test', (req, res) => {
@@ -50,6 +55,92 @@ app.get('/test', (req, res) => {
 // Notification test page
 app.get('/notifications-test', (req, res) => {
   res.sendFile('notification-test.html', { root: '.' });
+});
+
+// Result template test page
+app.get('/result-template-test', (req, res) => {
+  res.sendFile('result-template-test.html', { root: '.' });
+});
+
+// Public student registration form
+app.get('/register/:tuitionCustomId', (req, res) => {
+  res.sendFile('public/student-registration.html', { root: '.' });
+});
+
+// Get tuition info by custom ID or _id (for public form)
+app.get('/api/tuition/:customId', async (req, res) => {
+  try {
+    const { customId } = req.params;
+    
+    // Try to find by custom_id first, then by _id
+    let tuition = await Tuition.findOne({ custom_id: customId });
+    
+    if (!tuition) {
+      // If not found by custom_id, try by _id
+      tuition = await Tuition.findById(customId);
+    }
+    
+    if (!tuition) {
+      return res.status(404).json({ error: 'Tuition center not found' });
+    }
+    
+    res.json({
+      id: tuition._id,
+      custom_id: tuition.custom_id,
+      name: tuition.name,
+      standards_offered: tuition.standards_offered,
+      fees_structure: tuition.fees_structure
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create test tuition center for development
+app.post('/api/create-test-tuition', async (req, res) => {
+  try {
+    // Check if test tuition already exists
+    let testTuition = await Tuition.findOne({ custom_id: '689ec2085e9efcb9064aa995' });
+    
+    if (testTuition) {
+      return res.json({ 
+        message: 'Test tuition center already exists',
+        tuition: testTuition 
+      });
+    }
+    
+    // Create test tuition center
+    testTuition = new Tuition({
+      custom_id: '689ec2085e9efcb9064aa995',
+      name: 'Test Tuition Center',
+      address: '123 Test Street, Test City',
+      contact_info: '+91 9876543210',
+      standards_offered: ['1st Standard', '2nd Standard', '3rd Standard', '4th Standard', '5th Standard', '6th Standard', '7th Standard', '8th Standard', '9th Standard', '10th Standard'],
+      fees_structure: {
+        '1st Standard': 1000,
+        '2nd Standard': 1200,
+        '3rd Standard': 1400,
+        '4th Standard': 1600,
+        '5th Standard': 1800,
+        '6th Standard': 2000,
+        '7th Standard': 2200,
+        '8th Standard': 2400,
+        '9th Standard': 2600,
+        '10th Standard': 2800
+      },
+      owner_id: 'test_owner_id' // This will be updated when you have a real user
+    });
+    
+    await testTuition.save();
+    
+    res.json({ 
+      message: 'Test tuition center created successfully',
+      tuition: testTuition 
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.post('/upload', upload.single('file'), (req, res) => {
@@ -699,6 +790,271 @@ app.get('/report/backup', async (req, res) => {
   }
 });
 
+// ===== ABSENCE REASON SUBMISSION SYSTEM =====
+app.post('/submit-absence-reason', async (req, res) => {
+  try {
+    const { 
+      student_name, 
+      roll_number,
+      phone_number, 
+      standard, 
+      batch_name, 
+      absenceDates, 
+      reason,
+      tuition_id
+    } = req.body;
+
+    if (!student_name || !roll_number || !phone_number || !standard || !batch_name || !absenceDates || !reason) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Validate that absenceDates is an array and has at least one date
+    if (!Array.isArray(absenceDates) || absenceDates.length === 0) {
+      return res.status(400).json({ error: 'At least one absence date is required' });
+    }
+
+    // Find tuition by custom_id or _id
+    let tuition = await Tuition.findOne({ custom_id: tuition_id });
+    if (!tuition) {
+      // If not found by custom_id, try by _id
+      tuition = await Tuition.findById(tuition_id);
+    }
+    
+    if (!tuition) {
+      return res.status(404).json({ error: 'Tuition center not found' });
+    }
+    
+    const tuitionId = tuition._id;
+
+    // Save absence reasons for each date
+    const savedReasons = [];
+    for (const dateStr of absenceDates) {
+      const absenceReason = new AbsenceReason({
+        student_name: student_name,
+        roll_number: roll_number,
+        phone_number: phone_number,
+        standard: standard,
+        batch_name: batch_name,
+        tuition_id: tuitionId,
+        date: new Date(dateStr),
+        reason: reason
+      });
+      
+      const saved = await absenceReason.save();
+      savedReasons.push(saved);
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Absence reason submitted successfully',
+      data: {
+        student_name,
+        roll_number,
+        phone_number,
+        standard,
+        batch_name,
+        absenceDates,
+        reason,
+        savedReasons: savedReasons.length
+      }
+    });
+  } catch (error) {
+    console.error('Error submitting absence reason:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ===== FEE PAYMENT SUBMISSION SYSTEM =====
+app.post('/submit-fee-payment', async (req, res) => {
+  try {
+    const { 
+      student_name, 
+      roll_number,
+      phone_number, 
+      standard, 
+      batch_name, 
+      payment_amount, 
+      payment_mode,
+      transaction_id,
+      note,
+      tuition_id
+    } = req.body;
+
+    if (!student_name || !roll_number || !phone_number || !standard || !batch_name || !payment_amount || !payment_mode) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Validate payment amount
+    if (payment_amount <= 0) {
+      return res.status(400).json({ error: 'Invalid payment amount' });
+    }
+
+    // Validate transaction ID for online payments
+    if (['online', 'upi', 'card'].includes(payment_mode) && !transaction_id) {
+      return res.status(400).json({ error: 'Transaction ID is required for online payments' });
+    }
+
+    // Find tuition by custom_id or _id
+    let tuition = await Tuition.findOne({ custom_id: tuition_id });
+    if (!tuition) {
+      // If not found by custom_id, try by _id
+      tuition = await Tuition.findById(tuition_id);
+    }
+    
+    if (!tuition) {
+      return res.status(404).json({ error: 'Tuition center not found' });
+    }
+    
+    const tuitionId = tuition._id;
+
+    // Find student by name, standard, and batch
+    const batch = await Batch.findOne({
+      tuition_id: tuitionId,
+      name: { $regex: new RegExp(batch_name, 'i') },
+      standard: standard
+    });
+    
+    if (!batch) {
+      return res.status(404).json({ error: 'Batch not found' });
+    }
+
+    const student = await Student.findOne({
+      tuition_id: tuitionId,
+      name: { $regex: new RegExp(student_name, 'i') },
+      standard: standard,
+      batch_id: batch._id
+    });
+    
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found in the specified class and batch' });
+    }
+
+    // Create payment record
+    const payment = new FeePayment({
+      student_id: student._id,
+      tuition_id: tuitionId,
+      amount: payment_amount,
+      mode: payment_mode,
+      date: new Date(),
+      verified: false, // Will be verified by admin
+      note: note || `Public payment - ${payment_mode}${transaction_id ? ` (TXN: ${transaction_id})` : ''}`
+    });
+    
+    const savedPayment = await payment.save();
+
+    // Add payment to student's fees_paid array
+    student.fees_paid.push({
+      amount: payment_amount,
+      mode: payment_mode,
+      date: new Date(),
+      verified: false,
+      note: note || `Public payment - ${payment_mode}${transaction_id ? ` (TXN: ${transaction_id})` : ''}`
+    });
+    
+    await student.save();
+
+    res.json({ 
+      success: true, 
+      message: 'Fee payment submitted successfully',
+      data: {
+        student_name,
+        roll_number,
+        phone_number,
+        standard,
+        batch_name,
+        payment_amount,
+        payment_mode,
+        transaction_id,
+        note,
+        payment_id: savedPayment._id
+      }
+    });
+  } catch (error) {
+    console.error('Error submitting fee payment:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Serve the absence reason form
+app.get('/absence-reason/:tuitionId', (req, res) => {
+  res.sendFile('public/absence-reason-form.html', { root: '.' });
+});
+
+// Serve the fee payment form
+app.get('/fee-payment/:tuitionId', (req, res) => {
+  res.sendFile('public/fee-payment-form.html', { root: '.' });
+});
+
+// Get tuition data for fee payment form
+app.get('/api/tuition/:tuitionId', async (req, res) => {
+  try {
+    const { tuitionId } = req.params;
+    
+    // Find tuition by custom_id or _id
+    let tuition = await Tuition.findOne({ custom_id: tuitionId });
+    if (!tuition) {
+      // If not found by custom_id, try by _id
+      tuition = await Tuition.findById(tuitionId);
+    }
+    
+    if (!tuition) {
+      return res.status(404).json({ error: 'Tuition center not found' });
+    }
+    
+    res.json({
+      id: tuition._id,
+      name: tuition.name,
+      custom_id: tuition.custom_id,
+      standards_offered: tuition.standards_offered,
+      fees_structure: tuition.fees_structure
+    });
+  } catch (error) {
+    console.error('Error fetching tuition data:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Check absence submission endpoint
+app.post('/check-absence-submission', async (req, res) => {
+  try {
+    const { roll_number, tuition_id } = req.body;
+    
+    if (!roll_number || !tuition_id) {
+      return res.json({ hasRecentSubmission: false });
+    }
+
+    // Find tuition by custom_id
+    const tuition = await Tuition.findOne({ custom_id: tuition_id });
+    if (!tuition) {
+      return res.json({ hasRecentSubmission: false });
+    }
+
+    // Check for submissions in the last 24 hours
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    const recentSubmission = await AbsenceReason.findOne({
+      roll_number: roll_number,
+      tuition_id: tuition._id,
+      createdAt: { $gte: twentyFourHoursAgo }
+    });
+
+    if (recentSubmission) {
+      const timeRemaining = new Date(recentSubmission.createdAt.getTime() + 24 * 60 * 60 * 1000) - new Date();
+      const hoursRemaining = Math.ceil(timeRemaining / (1000 * 60 * 60));
+      
+      return res.json({
+        hasRecentSubmission: true,
+        message: `You have already submitted an absence reason. Please wait ${hoursRemaining} more hours before submitting again.`
+      });
+    }
+
+    res.json({ hasRecentSubmission: false });
+  } catch (error) {
+    console.error('Error checking absence submission:', error);
+    res.json({ hasRecentSubmission: false });
+  }
+});
+
 // ===== STUDENT SELF-REGISTRATION SYSTEM =====
 app.post('/register/student', async (req, res) => {
   try {
@@ -1248,6 +1604,252 @@ app.post('/notifications/test', async (req, res) => {
     console.error('Error creating test notification:', err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// Generate Result Card
+app.post('/generate/result-card', async (req, res) => {
+  try {
+    const token = req.headers.authorization || '';
+    const user = getUserFromToken(token);
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { result_id, format = 'image' } = req.body;
+
+    const result = await Result.findById(result_id)
+      .populate('student_id')
+      .populate('template_id');
+    
+    if (!result) {
+      return res.status(404).json({ error: 'Result not found' });
+    }
+
+    // Check if user has access to this result
+    const tuition = await Tuition.findById(result.tuition_id);
+    if (!tuition || (tuition.owner_id.toString() !== user.userId && user.role !== 'admin')) {
+      return res.status(403).json({ error: 'Not authorized to access this result' });
+    }
+
+    let cardUrl;
+    if (format === 'pdf') {
+      cardUrl = await generatePDFResultCard(result.template_id, result, result.student_id);
+    } else {
+      cardUrl = await generateResultCard(result.template_id, result, result.student_id);
+    }
+
+    // Update result with generated card URL
+    result.result_card_url = cardUrl;
+    result.result_card_type = format;
+    await result.save();
+
+    res.json({ 
+      success: true, 
+      result_card_url: cardUrl,
+      format: format,
+      message: 'Result card generated successfully'
+    });
+  } catch (err) {
+    console.error('Error generating result card:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Generate Batch Result Cards
+app.post('/generate/batch-result-cards', async (req, res) => {
+  try {
+    const token = req.headers.authorization || '';
+    const user = getUserFromToken(token);
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { batch_id, template_id, exam_name, exam_date, exam_type, format = 'image' } = req.body;
+
+    // Get batch and students
+    const batch = await Batch.findById(batch_id).populate('student_ids');
+    if (!batch) {
+      return res.status(404).json({ error: 'Batch not found' });
+    }
+
+    // Check if user has access to this batch
+    const tuition = await Tuition.findById(batch.tuition_id);
+    if (!tuition || (tuition.owner_id.toString() !== user.userId && user.role !== 'admin')) {
+      return res.status(403).json({ error: 'Not authorized to access this batch' });
+    }
+
+    const template = await ResultTemplate.findById(template_id);
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
+    const results = [];
+    const errors = [];
+
+    for (const student of batch.student_ids) {
+      try {
+        // Check if result already exists
+        let result = await Result.findOne({
+          student_id: student._id,
+          exam_name,
+          exam_date: new Date(exam_date),
+          exam_type
+        });
+
+        if (!result) {
+          return res.status(400).json({ 
+            error: `No result found for student ${student.name} for ${exam_name}` 
+          });
+        }
+
+        // Generate result card
+        let cardUrl;
+        if (format === 'pdf') {
+          cardUrl = await generatePDFResultCard(template, result, student);
+        } else {
+          cardUrl = await generateResultCard(template, result, student);
+        }
+
+        // Update result
+        result.result_card_url = cardUrl;
+        result.result_card_type = format;
+        await result.save();
+
+        results.push({
+          student_id: student._id,
+          student_name: student.name,
+          result_card_url: cardUrl
+        });
+      } catch (error) {
+        errors.push({
+          student_id: student._id,
+          student_name: student.name,
+          error: error.message
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      generated_count: results.length,
+      error_count: errors.length,
+      results,
+      errors
+    });
+  } catch (err) {
+    console.error('Error generating batch result cards:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get Result Templates
+app.get('/result-templates', async (req, res) => {
+  try {
+    const token = req.headers.authorization || '';
+    const user = getUserFromToken(token);
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { tuition_id, standard } = req.query;
+    const query = {};
+    
+    if (tuition_id) query.tuition_id = tuition_id;
+    if (standard) query.standard = standard;
+
+    const templates = await ResultTemplate.find(query);
+    res.json({ success: true, templates });
+  } catch (err) {
+    console.error('Error fetching result templates:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get Results
+app.get('/results', async (req, res) => {
+  try {
+    const token = req.headers.authorization || '';
+    const user = getUserFromToken(token);
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { tuition_id, student_id, exam_type } = req.query;
+    const query = {};
+    
+    if (tuition_id) query.tuition_id = tuition_id;
+    if (student_id) query.student_id = student_id;
+    if (exam_type) query.exam_type = exam_type;
+
+    const results = await Result.find(query)
+      .populate('student_id', 'name custom_id standard')
+      .populate('template_id', 'name template_type');
+    
+    res.json({ success: true, results });
+  } catch (err) {
+    console.error('Error fetching results:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Validate student in specific standard and batch
+app.post('/validate-student', async (req, res) => {
+    try {
+        const { student_name, roll_number, standard, batch_name, tuition_id } = req.body;
+        
+        // First find the tuition by custom_id or _id
+        let tuition = await Tuition.findOne({ custom_id: tuition_id });
+        if (!tuition) {
+            // If not found by custom_id, try by _id
+            tuition = await Tuition.findById(tuition_id);
+        }
+        
+        if (!tuition) {
+            return res.json({
+                isValid: false,
+                message: 'Tuition not found'
+            });
+        }
+        
+        // First find the batch by name and standard
+        const batch = await Batch.findOne({
+            tuition_id: tuition._id,
+            name: { $regex: new RegExp(batch_name, 'i') },
+            standard: standard
+        });
+        
+        if (!batch) {
+            return res.json({
+                isValid: false,
+                message: 'Batch not found'
+            });
+        }
+        
+        // Find student in the specified tuition, standard, and batch
+        const student = await Student.findOne({
+            tuition_id: tuition._id,
+            name: { $regex: new RegExp(student_name, 'i') },
+            standard: standard,
+            batch_id: batch._id
+        });
+        
+        res.json({
+            isValid: !!student,
+            student: student ? {
+                name: student.name,
+                standard: student.standard,
+                batch_name: batch.name
+            } : null,
+            message: student ? 'Student found' : 'Student not found in selected class and batch'
+        });
+    } catch (error) {
+        console.error('Error validating student:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 const startServer = async () => {

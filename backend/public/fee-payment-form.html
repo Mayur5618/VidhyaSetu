@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fee Payment Form - VidhyaSetu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .page-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="page-bg min-h-screen">
+    <div class="container mx-auto px-4 py-4 sm:py-6 max-w-2xl">
+        <!-- Header -->
+        <div class="text-center mb-0">
+            <div class="bg-gradient-to-r from-green-600 to-blue-600 rounded-t-xl p-6">
+                <div class="flex items-center justify-center gap-3 mb-2">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                        </svg>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-white">VidhyaSetu</h1>
+                </div>
+                <p class="text-lg sm:text-xl text-white font-medium">Fee Payment Form</p>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-white rounded-b-xl shadow-xl p-4 sm:p-6 lg:p-8 -mt-1">
+            <form id="feePaymentForm" class="space-y-4 sm:space-y-6">
+                <!-- Student Name -->
+                <div>
+                    <label for="studentName" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Student Name *
+                    </label>
+                    <input 
+                        type="text" 
+                        id="studentName" 
+                        name="studentName" 
+                        required
+                        class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-sm sm:text-base bg-gray-50 focus:bg-white"
+                        placeholder="Enter your full name"
+                    >
+                </div>
+
+                <!-- Roll Number -->
+                <div>
+                    <label for="rollNumber" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Roll Number *
+                    </label>
+                    <input 
+                        type="text" 
+                        id="rollNumber" 
+                        name="rollNumber" 
+                        required
+                        class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-sm sm:text-base bg-gray-50 focus:bg-white"
+                        placeholder="Enter your roll number"
+                    >
+                </div>
+
+                <!-- Phone Number -->
+                <div>
+                    <label for="phoneNumber" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Phone Number *
+                    </label>
+                    <input 
+                        type="tel" 
+                        id="phoneNumber" 
+                        name="phoneNumber" 
+                        required
+                        pattern="[0-9]{10}"
+                        class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-sm sm:text-base bg-gray-50 focus:bg-white"
+                        placeholder="Enter 10-digit phone number"
+                    >
+                </div>
+
+                <!-- Standard and Batch in same row -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <!-- Standard -->
+                    <div>
+                        <label for="standard" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Standard *
+                        </label>
+                        <select 
+                            id="standard" 
+                            name="standard" 
+                            required
+                            class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-sm sm:text-base bg-gray-50 focus:bg-white"
+                        >
+                            <option value="">Select your standard</option>
+                            <option value="1">Class 1</option>
+                            <option value="2">Class 2</option>
+                            <option value="3">Class 3</option>
+                            <option value="4">Class 4</option>
+                            <option value="5">Class 5</option>
+                            <option value="6">Class 6</option>
+                            <option value="7">Class 7</option>
+                            <option value="8">Class 8</option>
+                            <option value="9">Class 9</option>
+                            <option value="10">Class 10</option>
+                            <option value="11">Class 11</option>
+                            <option value="12">Class 12</option>
+                        </select>
+                    </div>
+
+                    <!-- Batch -->
+                    <div>
+                        <label for="batch" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Batch *
+                        </label>
+                        <select 
+                            id="batch" 
+                            name="batch" 
+                            required
+                            class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-sm sm:text-base bg-gray-50 focus:bg-white"
+                        >
+                            <option value="">Select your batch</option>
+                            <option value="morning">Morning</option>
+                            <option value="afternoon">Afternoon</option>
+                            <option value="evening">Evening</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Payment Amount -->
+                <div>
+                    <label for="paymentAmount" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Payment Amount (₹) *
+                    </label>
+                    <input 
+                        type="number" 
+                        id="paymentAmount" 
+                        name="paymentAmount" 
+                        required
+                        min="1"
+                        step="0.01"
+                        class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-sm sm:text-base bg-gray-50 focus:bg-white"
+                        placeholder="Enter payment amount"
+                    >
+                </div>
+
+                <!-- Payment Mode -->
+                <div>
+                    <label for="paymentMode" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Payment Mode *
+                    </label>
+                    <select 
+                        id="paymentMode" 
+                        name="paymentMode" 
+                        required
+                        class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-sm sm:text-base bg-gray-50 focus:bg-white"
+                    >
+                        <option value="">Select payment mode</option>
+                        <option value="cash">Cash</option>
+                        <option value="online">Online Transfer</option>
+                        <option value="cheque">Cheque</option>
+                        <option value="card">Card Payment</option>
+                        <option value="upi">UPI</option>
+                    </select>
+                </div>
+
+                <!-- Transaction ID (for online payments) -->
+                <div id="transactionIdField" class="hidden">
+                    <label for="transactionId" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Transaction ID *
+                    </label>
+                    <input 
+                        type="text" 
+                        id="transactionId" 
+                        name="transactionId" 
+                        class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-sm sm:text-base bg-gray-50 focus:bg-white"
+                        placeholder="Enter transaction ID"
+                    >
+                </div>
+
+                <!-- Note -->
+                <div>
+                    <label for="note" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Note (Optional)
+                    </label>
+                    <textarea 
+                        id="note" 
+                        name="note" 
+                        rows="3"
+                        class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-sm sm:text-base bg-gray-50 focus:bg-white"
+                        placeholder="Add any additional notes..."
+                    ></textarea>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center">
+                    <button 
+                        type="submit" 
+                        id="submitBtn"
+                        class="w-full sm:w-auto bg-gradient-to-r from-green-500 to-blue-600 text-white font-semibold py-3 px-8 rounded-lg hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled
+                    >
+                        Submit Payment
+                    </button>
+                    <div id="validationMessage" class="mt-2 text-red-600 text-sm font-medium hidden"></div>
+                </div>
+            </form>
+
+            <!-- Instructions -->
+            <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-100 rounded-lg">
+                <h3 class="font-semibold text-gray-900 mb-2">Instructions:</h3>
+                <ul class="text-sm text-gray-700 space-y-1">
+                    <li>• Fill all required fields marked with *</li>
+                    <li>• Ensure your student details match the records</li>
+                    <li>• For online payments, provide the transaction ID</li>
+                    <li>• Payment will be verified by the administration</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Message (Hidden by default) -->
+    <div id="successMessage" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl p-8 max-w-md mx-4 text-center">
+            <!-- Success Icon -->
+            <div class="mx-auto w-16 h-16 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mb-6 shadow-lg">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            
+            <!-- Success Text -->
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Payment Submitted!</h2>
+            <p class="text-gray-600 mb-6">Your fee payment has been successfully submitted. The administration will verify and update your records shortly.</p>
+            
+            <!-- Payment Details -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <div class="text-sm text-gray-600">
+                    <div class="flex justify-between mb-2">
+                        <span>Amount:</span>
+                        <span id="successAmount" class="font-semibold text-gray-900"></span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span>Mode:</span>
+                        <span id="successMode" class="font-semibold text-gray-900"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Date:</span>
+                        <span id="successDate" class="font-semibold text-gray-900"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Thank You Message -->
+            <p class="text-sm text-gray-500">Thank you for using VidhyaSetu!</p>
+        </div>
+    </div>
+
+    <script>
+        let tuitionData = null;
+        let isFormSubmitted = false;
+
+        // Load tuition data when page loads
+        async function loadTuitionData() {
+            try {
+                const tuitionId = window.location.pathname.split('/').pop();
+                const response = await fetch(`/api/tuition/${tuitionId}`);
+                
+                if (!response.ok) {
+                    throw new Error('Tuition center not found');
+                }
+                
+                tuitionData = await response.json();
+                console.log('Tuition data loaded:', tuitionData);
+            } catch (error) {
+                console.error('Error loading tuition data:', error);
+                alert('Error loading tuition center data. Please check the link.');
+            }
+        }
+
+        // Validate student exists
+        async function validateStudent() {
+            const studentName = document.getElementById('studentName').value.trim();
+            const rollNumber = document.getElementById('rollNumber').value.trim();
+            const standard = document.getElementById('standard').value;
+            const batch = document.getElementById('batch').value;
+            
+            if (!studentName || !rollNumber || !standard || !batch) {
+                return false;
+            }
+            
+            try {
+                const tuitionId = window.location.pathname.split('/').pop();
+                const response = await fetch('/validate-student', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        student_name: studentName,
+                        standard: standard,
+                        batch_name: batch,
+                        tuition_id: tuitionId
+                    })
+                });
+                
+                const result = await response.json();
+                return result.isValid;
+            } catch (error) {
+                console.error('Error validating student:', error);
+                return false;
+            }
+        }
+
+        // Update form validation status
+        function updateValidationStatus(isValid, message = '') {
+            const submitBtn = document.getElementById('submitBtn');
+            const validationMessage = document.getElementById('validationMessage');
+            
+            if (isValid) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitBtn.classList.add('hover:from-green-600', 'hover:to-blue-700');
+                if (validationMessage) {
+                    validationMessage.textContent = '';
+                    validationMessage.classList.add('hidden');
+                }
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                submitBtn.classList.remove('hover:from-green-600', 'hover:to-blue-700');
+                if (validationMessage) {
+                    validationMessage.textContent = message || 'Please check student details';
+                    validationMessage.classList.remove('hidden');
+                }
+            }
+        }
+
+        // Check validation when any field changes
+        async function checkValidation() {
+            const studentName = document.getElementById('studentName').value.trim();
+            const rollNumber = document.getElementById('rollNumber').value.trim();
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const standard = document.getElementById('standard').value;
+            const batch = document.getElementById('batch').value;
+            const paymentAmount = document.getElementById('paymentAmount').value.trim();
+            const paymentMode = document.getElementById('paymentMode').value;
+            
+            if (!studentName || !rollNumber || !phoneNumber || !standard || !batch || !paymentAmount || !paymentMode) {
+                updateValidationStatus(false, 'Please fill all required fields');
+                return;
+            }
+            
+            // Check phone number format
+            if (!/^[0-9]{10}$/.test(phoneNumber)) {
+                updateValidationStatus(false, 'Please enter a valid 10-digit phone number');
+                return;
+            }
+            
+            // Check payment amount
+            if (parseFloat(paymentAmount) <= 0) {
+                updateValidationStatus(false, 'Please enter a valid payment amount');
+                return;
+            }
+            
+            // Check transaction ID for online payments
+            if (['online', 'upi', 'card'].includes(paymentMode)) {
+                const transactionId = document.getElementById('transactionId').value.trim();
+                if (!transactionId) {
+                    updateValidationStatus(false, 'Transaction ID is required for online payments');
+                    return;
+                }
+            }
+            
+            const isValid = await validateStudent();
+            if (isValid) {
+                updateValidationStatus(true);
+            } else {
+                updateValidationStatus(false, 'Student not found in selected class and batch. Please check your details.');
+            }
+        }
+
+        // Show/hide transaction ID field based on payment mode
+        function toggleTransactionIdField() {
+            const paymentMode = document.getElementById('paymentMode').value;
+            const transactionIdField = document.getElementById('transactionIdField');
+            const transactionIdInput = document.getElementById('transactionId');
+            
+            if (['online', 'upi', 'card'].includes(paymentMode)) {
+                transactionIdField.classList.remove('hidden');
+                transactionIdInput.required = true;
+            } else {
+                transactionIdField.classList.add('hidden');
+                transactionIdInput.required = false;
+                transactionIdInput.value = '';
+            }
+        }
+
+        // Show success message
+        function showSuccessMessage(paymentData) {
+            document.getElementById('successAmount').textContent = `₹${paymentData.amount}`;
+            document.getElementById('successMode').textContent = paymentData.mode;
+            document.getElementById('successDate').textContent = new Date().toLocaleDateString();
+            
+            document.getElementById('successMessage').classList.remove('hidden');
+            document.getElementById('feePaymentForm').style.display = 'none';
+        }
+
+        // Handle form submission
+        async function handleSubmit(event) {
+            event.preventDefault();
+            
+            if (isFormSubmitted) return;
+            
+            // Validate student before submission
+            const isValid = await validateStudent();
+            if (!isValid) {
+                alert('Student validation failed. Please check your details.');
+                return;
+            }
+            
+            const formData = new FormData(event.target);
+            const data = {
+                student_name: formData.get('studentName'),
+                roll_number: formData.get('rollNumber'),
+                phone_number: formData.get('phoneNumber'),
+                standard: formData.get('standard'),
+                batch_name: formData.get('batch'),
+                payment_amount: parseFloat(formData.get('paymentAmount')),
+                payment_mode: formData.get('paymentMode'),
+                transaction_id: formData.get('transactionId') || '',
+                note: formData.get('note') || '',
+                tuition_id: window.location.pathname.split('/').pop()
+            };
+            
+            // Validate phone number
+            if (!/^[0-9]{10}$/.test(data.phone_number)) {
+                alert('Please enter a valid 10-digit phone number');
+                return;
+            }
+            
+            // Validate payment amount
+            if (data.payment_amount <= 0) {
+                alert('Please enter a valid payment amount');
+                return;
+            }
+            
+            // Validate transaction ID for online payments
+            if (['online', 'upi', 'card'].includes(data.payment_mode) && !data.transaction_id) {
+                alert('Transaction ID is required for online payments');
+                return;
+            }
+            
+            isFormSubmitted = true;
+            
+            // Submit the form
+            fetch('/submit-fee-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showSuccessMessage(data);
+                } else {
+                    alert('Error: ' + (result.error || result.message || 'Failed to submit payment'));
+                    isFormSubmitted = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while submitting the payment.');
+                isFormSubmitted = false;
+            });
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTuitionData();
+            
+            const form = document.getElementById('feePaymentForm');
+            const studentNameInput = document.getElementById('studentName');
+            const rollNumberInput = document.getElementById('rollNumber');
+            const phoneNumberInput = document.getElementById('phoneNumber');
+            const standardSelect = document.getElementById('standard');
+            const batchSelect = document.getElementById('batch');
+            const paymentAmountInput = document.getElementById('paymentAmount');
+            const paymentModeSelect = document.getElementById('paymentMode');
+            const transactionIdInput = document.getElementById('transactionId');
+            
+            // Add validation triggers
+            studentNameInput.addEventListener('input', checkValidation);
+            rollNumberInput.addEventListener('input', checkValidation);
+            phoneNumberInput.addEventListener('input', checkValidation);
+            standardSelect.addEventListener('change', checkValidation);
+            batchSelect.addEventListener('change', checkValidation);
+            paymentAmountInput.addEventListener('input', checkValidation);
+            paymentModeSelect.addEventListener('change', () => {
+                toggleTransactionIdField();
+                checkValidation();
+            });
+            transactionIdInput.addEventListener('input', checkValidation);
+            
+            // Handle form submission
+            form.addEventListener('submit', handleSubmit);
+        });
+    </script>
+</body>
+</html>
+
+

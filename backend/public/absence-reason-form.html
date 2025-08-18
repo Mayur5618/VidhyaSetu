@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absence Reason Form - VidhyaSetu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .page-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .date-chip {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            margin: 4px;
+            font-size: 14px;
+        }
+        .date-chip .remove-btn {
+            margin-left: 8px;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+        .date-chip .remove-btn:hover {
+            opacity: 1;
+        }
+        .date-input-group {
+            border: 2px dashed #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .date-input-group:hover {
+            border-color: #667eea;
+            background-color: #f8fafc;
+        }
+        @media (max-width: 768px) {
+            .date-input-group {
+                padding: 16px;
+            }
+            .quick-add-btn {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+<body class="page-bg min-h-screen">
+    <div class="container mx-auto px-4 py-4 sm:py-6 max-w-2xl">
+        <!-- Header -->
+        <div class="text-center mb-0">
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-xl p-6">
+                <div class="flex items-center justify-center gap-3 mb-2">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-white">VidhyaSetu</h1>
+                </div>
+                <p class="text-lg sm:text-xl text-white font-medium">Absence Reason Form</p>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-white rounded-b-xl shadow-xl p-4 sm:p-6 lg:p-8 -mt-1">
+            <form id="absenceForm" class="space-y-4 sm:space-y-6">
+                <!-- Student Name -->
+                <div>
+                    <label for="studentName" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Student Name *
+                    </label>
+                    <input 
+                        type="text" 
+                        id="studentName" 
+                        name="studentName" 
+                        required
+                        class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm sm:text-base bg-gray-50 focus:bg-white"
+                        placeholder="Enter your full name"
+                    >
+                </div>
+
+                <!-- Roll Number -->
+                <div>
+                    <label for="rollNumber" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Roll Number *
+                    </label>
+                    <input 
+                        type="text" 
+                        id="rollNumber" 
+                        name="rollNumber" 
+                        required
+                        class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm sm:text-base bg-gray-50 focus:bg-white"
+                        placeholder="Enter your roll number"
+                    >
+                </div>
+
+                <!-- Phone Number -->
+                <div>
+                    <label for="phoneNumber" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Phone Number *
+                    </label>
+                    <input 
+                        type="tel" 
+                        id="phoneNumber" 
+                        name="phoneNumber" 
+                        required
+                        pattern="[0-9]{10}"
+                        class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm sm:text-base bg-gray-50 focus:bg-white"
+                        placeholder="Enter 10-digit phone number"
+                    >
+                </div>
+
+                <!-- Standard and Batch in same row -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <!-- Standard -->
+                    <div>
+                        <label for="standard" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Standard *
+                        </label>
+                        <select 
+                            id="standard" 
+                            name="standard" 
+                            required
+                            class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm sm:text-base bg-gray-50 focus:bg-white"
+                        >
+                            <option value="">Select your standard</option>
+                            <option value="1">Class 1</option>
+                            <option value="2">Class 2</option>
+                            <option value="3">Class 3</option>
+                            <option value="4">Class 4</option>
+                            <option value="5">Class 5</option>
+                            <option value="6">Class 6</option>
+                            <option value="7">Class 7</option>
+                            <option value="8">Class 8</option>
+                            <option value="9">Class 9</option>
+                            <option value="10">Class 10</option>
+                            <option value="11">Class 11</option>
+                            <option value="12">Class 12</option>
+                        </select>
+                    </div>
+
+                    <!-- Batch -->
+                    <div>
+                        <label for="batch" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Batch *
+                        </label>
+                        <select 
+                            id="batch" 
+                            name="batch" 
+                            required
+                            class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm sm:text-base bg-gray-50 focus:bg-white"
+                        >
+                            <option value="">Select your batch</option>
+                            <option value="morning">Morning</option>
+                            <option value="afternoon">Afternoon</option>
+                            <option value="evening">Evening</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Multiple Dates Section -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">
+                        Absence Dates *
+                    </label>
+                    
+                    <!-- Date Input Group -->
+                    <div class="date-input-group mb-4">
+                        <div class="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-4 mb-4">
+                            <input 
+                                type="date" 
+                                id="absenceDate" 
+                                class="w-full sm:w-auto px-3 sm:px-4 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base bg-gray-50 focus:bg-white"
+                            >
+                            <button 
+                                type="button" 
+                                id="addDateBtn"
+                                class="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-medium text-sm sm:text-base shadow-md hover:shadow-lg"
+                            >
+                                Add Date
+                            </button>
+                        </div>
+                        
+                        <!-- Quick Add Options -->
+                        <div class="flex flex-wrap justify-center gap-2 mb-4">
+                            <button type="button" class="quick-add-btn px-2 sm:px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs sm:text-sm hover:bg-gray-200 transition-colors border border-gray-200 hover:border-gray-300" data-days="1">+1 Day</button>
+                            <button type="button" class="quick-add-btn px-2 sm:px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs sm:text-sm hover:bg-gray-200 transition-colors border border-gray-200 hover:border-gray-300" data-days="2">+2 Days</button>
+                            <button type="button" class="quick-add-btn px-2 sm:px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs sm:text-sm hover:bg-gray-200 transition-colors border border-gray-200 hover:border-gray-300" data-days="3">+3 Days</button>
+                            <button type="button" class="quick-add-btn px-2 sm:px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs sm:text-sm hover:bg-gray-200 transition-colors border border-gray-200 hover:border-gray-300" data-days="5">+5 Days</button>
+                            <button type="button" class="quick-add-btn px-2 sm:px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs sm:text-sm hover:bg-gray-200 transition-colors border border-gray-200 hover:border-gray-300" data-days="7">+1 Week</button>
+                        </div>
+                        
+                        <p class="text-xs sm:text-sm text-gray-500">Select dates or use quick add options above</p>
+                    </div>
+
+                    <!-- Selected Dates Display -->
+                    <div id="selectedDates" class="min-h-[60px] border-2 border-dashed border-gray-200 rounded-lg p-3 sm:p-4 bg-gray-50">
+                        <p class="text-gray-500 text-center text-sm">No dates selected yet</p>
+                    </div>
+                </div>
+
+                <!-- Reason -->
+                <div>
+                    <label for="reason" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Reason for Absence *
+                    </label>
+                    <textarea 
+                        id="reason" 
+                        name="reason" 
+                        rows="3" 
+                        required
+                        class="w-full px-3 sm:px-4 py-2 sm:py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-none text-sm sm:text-base bg-gray-50 focus:bg-white"
+                        placeholder="Please explain why you cannot attend tuition..."
+                    ></textarea>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center">
+                <button 
+                    type="submit" 
+                    id="submitBtn"
+                        class="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-3 px-8 rounded-lg hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled
+                >
+                    Submit Absence Reason
+                </button>
+                    <div id="validationMessage" class="mt-2 text-red-600 text-sm font-medium hidden"></div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Instructions -->
+        <div class="mt-4 sm:mt-6 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+            <h3 class="font-semibold text-blue-800 mb-2 text-sm sm:text-base">Instructions:</h3>
+            <ul class="text-xs sm:text-sm text-blue-700 space-y-1">
+                <li>• Fill all required fields marked with *</li>
+                <li>• You can add multiple dates for consecutive absences</li>
+                <li>• Use quick add buttons for common absence periods</li>
+                <li>• Provide a clear reason for your absence</li>
+                <li>• Submit the form before your tuition class</li>
+            </ul>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-6 sm:mt-8 text-gray-500 text-xs sm:text-sm">
+            <p>© 2024 VidhyaSetu. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script>
+        let selectedDates = new Set();
+        const tuitionId = window.location.pathname.split('/').pop();
+        let isFormLocked = false;
+        let lockoutMessage = '';
+
+        // Set default date to tomorrow
+        document.getElementById('absenceDate').value = new Date(Date.now() + 24*60*60*1000).toISOString().split('T')[0];
+
+        // Check for existing submission on page load
+        window.addEventListener('load', async function() {
+            await checkFormAvailability();
+        });
+
+        // Check submission when roll number changes
+        document.getElementById('rollNumber').addEventListener('blur', async function() {
+            if (this.value) {
+                await checkFormAvailability();
+            }
+        });
+
+        // Add date button functionality
+        document.getElementById('addDateBtn').addEventListener('click', function() {
+            const dateInput = document.getElementById('absenceDate');
+            const date = dateInput.value;
+            
+            if (date && !selectedDates.has(date)) {
+                selectedDates.add(date);
+                updateSelectedDatesDisplay();
+                updateSubmitButton();
+            }
+        });
+
+        // Quick add buttons functionality
+        document.querySelectorAll('.quick-add-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const days = parseInt(this.dataset.days);
+                const startDate = new Date();
+                startDate.setDate(startDate.getDate() + 1); // Start from tomorrow
+                
+                for (let i = 0; i < days; i++) {
+                    const date = new Date(startDate);
+                    date.setDate(startDate.getDate() + i);
+                    const dateStr = date.toISOString().split('T')[0];
+                    selectedDates.add(dateStr);
+                }
+                
+                updateSelectedDatesDisplay();
+                updateSubmitButton();
+            });
+        });
+
+        function updateSelectedDatesDisplay() {
+            const container = document.getElementById('selectedDates');
+            
+            if (selectedDates.size === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center text-sm">No dates selected yet</p>';
+                return;
+            }
+            
+            const datesArray = Array.from(selectedDates).sort();
+            container.innerHTML = datesArray.map(date => `
+                <div class="date-chip">
+                    ${formatDate(date)}
+                    <span class="remove-btn" onclick="removeDate('${date}')">×</span>
+                </div>
+            `).join('');
+        }
+
+        function removeDate(date) {
+            selectedDates.delete(date);
+            updateSelectedDatesDisplay();
+            updateSubmitButton();
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+        }
+
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = selectedDates.size === 0;
+        }
+
+        // Check if form is locked for this user
+        function checkFormLockout() {
+            const rollNumber = document.getElementById('rollNumber').value.trim();
+            const tuitionId = window.location.pathname.split('/').pop();
+            
+            if (!rollNumber) return;
+            
+            fetch('/check-absence-submission', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    roll_number: rollNumber,
+                    tuition_id: tuitionId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.isLocked) {
+                    // Form is locked - show success message and hide form completely
+                    showSuccessAndHideForm();
+                }
+            })
+            .catch(error => {
+                console.error('Error checking form lockout:', error);
+            });
+        }
+
+        // Show success message and hide form completely (Google Forms style)
+        function showSuccessAndHideForm() {
+            const formContainer = document.querySelector('.container');
+            formContainer.innerHTML = `
+                <div class="text-center max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+                    <!-- Success Icon with Animation -->
+                    <div class="w-20 h-20 sm:w-28 sm:h-28 lg:w-36 lg:h-36 bg-gradient-to-br from-emerald-400 via-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8 lg:mb-12 shadow-2xl animate-pulse">
+                        <div class="w-12 h-12 sm:w-16 sm:h-16 lg:w-24 lg:h-24 bg-white/20 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 sm:w-8 sm:h-8 lg:w-12 lg:h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <!-- Success Title with Gradient Text -->
+                    <div class="mb-6 sm:mb-8 lg:mb-12">
+                        <h1 class="text-3xl sm:text-4xl lg:text-6xl font-black bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent mb-3 sm:mb-4 lg:mb-6 drop-shadow-2xl">
+                            Form Submitted Successfully!
+                        </h1>
+                        <p class="text-lg sm:text-xl lg:text-2xl text-gray-200 font-medium drop-shadow px-2 sm:px-4">
+                            Your absence reason has been submitted successfully.
+                        </p>
+                    </div>
+                    
+                    <!-- Info Card with Enhanced Design -->
+                    <div class="bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 lg:p-12 mb-6 sm:mb-8 lg:mb-12 border border-white/30 transform hover:scale-[1.02] transition-transform duration-300">
+                        <div class="flex items-center gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8 lg:mb-10">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-xl">
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                                What happens next?
+                            </h3>
+                        </div>
+                        <ul class="space-y-4 sm:space-y-6 lg:space-y-8 text-left">
+                            <li class="flex items-start gap-3 sm:gap-4 lg:gap-6 group">
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 mt-1 shadow-lg group-hover:scale-110 transition-transform duration-200">
+                                    <svg class="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-base sm:text-lg lg:text-xl text-gray-700 leading-relaxed font-medium group-hover:text-gray-800 transition-colors duration-200">
+                                    Your absence reason has been recorded in our system
+                                </span>
+                            </li>
+                            <li class="flex items-start gap-3 sm:gap-4 lg:gap-6 group">
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 mt-1 shadow-lg group-hover:scale-110 transition-transform duration-200">
+                                    <svg class="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-base sm:text-lg lg:text-xl text-gray-700 leading-relaxed font-medium group-hover:text-gray-800 transition-colors duration-200">
+                                    Teachers will be able to see your reason during attendance
+                                </span>
+                            </li>
+                            <li class="flex items-start gap-3 sm:gap-4 lg:gap-6 group">
+                                <div class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 mt-1 shadow-lg group-hover:scale-110 transition-transform duration-200">
+                                    <svg class="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-base sm:text-lg lg:text-xl text-gray-700 leading-relaxed font-medium group-hover:text-gray-800 transition-colors duration-200">
+                                    You can submit another absence reason after 24 hours
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Timer Card with Enhanced Design -->
+                    <div class="bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 backdrop-blur-md border border-white/40 rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-12 mb-8 sm:mb-10 lg:mb-12 shadow-2xl transform hover:scale-[1.02] transition-transform duration-300">
+                        <div class="flex items-center justify-center gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 bg-white/25 rounded-xl sm:rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow">
+                                Form Lockout Period
+                            </h3>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-lg sm:text-xl lg:text-2xl text-white font-medium mb-3 sm:mb-4">
+                                This form will be available again in
+                            </p>
+                            <div class="inline-flex items-center gap-2 sm:gap-3 bg-white/20 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl border border-white/30">
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-xl sm:text-2xl lg:text-3xl font-black text-white">24 hours</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Enhanced Footer -->
+                    <div class="text-center">
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 lg:mb-8 shadow-2xl transform hover:rotate-12 transition-transform duration-300">
+                            <span class="text-white font-black text-lg sm:text-2xl lg:text-3xl">VS</span>
+                        </div>
+                        <div class="space-y-1 sm:space-y-2">
+                            <p class="text-lg sm:text-xl lg:text-2xl text-white font-bold drop-shadow">
+                                Thank you for using VidhyaSetu!
+                            </p>
+                            <p class="text-base sm:text-lg lg:text-xl text-gray-200 font-medium drop-shadow">
+                                Your education management partner
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Check if student exists in the selected standard and batch
+        async function validateStudent() {
+            const studentName = document.getElementById('studentName').value.trim();
+            const standard = document.getElementById('standard').value;
+            const batch = document.getElementById('batch').value;
+            
+            if (!studentName || !standard || !batch) {
+                return { isValid: false, message: 'Please fill all required fields' };
+            }
+            
+            try {
+                const response = await fetch('/validate-student', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        student_name: studentName,
+                        standard: standard,
+                        batch_name: batch,
+                        tuition_id: window.location.pathname.split('/').pop()
+                    })
+                });
+                
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Error validating student:', error);
+                return { isValid: false, message: 'Error checking student details' };
+            }
+        }
+
+        // Update form validation status - simplified for basic field validation only
+        function updateValidationStatus(isValid, message = '') {
+            const submitBtn = document.getElementById('submitBtn');
+            const validationMessage = document.getElementById('validationMessage');
+            
+            if (isValid) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitBtn.classList.add('hover:from-blue-600', 'hover:to-purple-600');
+                if (validationMessage) {
+                    validationMessage.textContent = '';
+                    validationMessage.classList.add('hidden');
+                }
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                submitBtn.classList.remove('hover:from-blue-600', 'hover:to-purple-600');
+                if (validationMessage) {
+                    validationMessage.textContent = message || 'Please fill all required fields';
+                    validationMessage.classList.remove('hidden');
+                }
+            }
+        }
+
+        // Check basic validation (only required fields, no database check)
+        function checkBasicValidation() {
+            const studentName = document.getElementById('studentName').value.trim();
+            const rollNumber = document.getElementById('rollNumber').value.trim();
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const standard = document.getElementById('standard').value;
+            const batch = document.getElementById('batch').value;
+            const reason = document.getElementById('reason').value.trim();
+            
+            if (!studentName || !rollNumber || !phoneNumber || !standard || !batch || !reason) {
+                updateValidationStatus(false, 'Please fill all required fields');
+                return false;
+            }
+            
+            // Check if at least one date is selected
+            if (selectedDates.size === 0) {
+                updateValidationStatus(false, 'Please select at least one absence date');
+                return false;
+            }
+            
+            // Check phone number format
+            if (!/^[0-9]{10}$/.test(phoneNumber)) {
+                updateValidationStatus(false, 'Please enter a valid 10-digit phone number');
+                return false;
+            }
+            
+            updateValidationStatus(true);
+            return true;
+        }
+
+        // Handle form submission
+        async function handleSubmit(event) {
+            event.preventDefault();
+            
+            // Perform basic validation
+            if (!checkBasicValidation()) {
+                return;
+            }
+            
+            // Validate student existence on form submission
+            const validationResult = await validateStudent();
+            if (!validationResult.isValid) {
+                alert(validationResult.message || 'Student not found in selected class and batch. Please check your details.');
+                return;
+            }
+            
+            const formData = new FormData(event.target);
+            const data = {
+                student_name: formData.get('studentName'),
+                roll_number: formData.get('rollNumber'),
+                phone_number: formData.get('phoneNumber'),
+                standard: formData.get('standard'),
+                batch_name: formData.get('batch'),
+                reason: formData.get('reason'),
+                absenceDates: Array.from(selectedDates),
+                tuition_id: window.location.pathname.split('/').pop()
+            };
+            
+            // Submit the form
+            fetch('/submit-absence-reason', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    // Hide form completely and show success message (Google Forms style)
+                    showSuccessAndHideForm();
+                } else {
+                    alert('Error: ' + (result.error || result.message || 'Failed to submit'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while submitting the form.');
+            });
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('absenceForm');
+            const rollNumberInput = document.getElementById('rollNumber');
+            const studentNameInput = document.getElementById('studentName');
+            const standardSelect = document.getElementById('standard');
+            const batchSelect = document.getElementById('batch');
+            
+            // Check form lockout on page load
+            checkFormLockout();
+            
+            // Check form lockout when roll number changes
+            rollNumberInput.addEventListener('blur', checkFormLockout);
+            
+            // Add validation triggers (removed roll number since it's not in database)
+            studentNameInput.addEventListener('input', checkBasicValidation);
+            standardSelect.addEventListener('change', checkBasicValidation);
+            batchSelect.addEventListener('change', checkBasicValidation);
+            
+            // Add validation for other required fields
+            const phoneNumberInput = document.getElementById('phoneNumber');
+            const reasonInput = document.getElementById('reason');
+            
+            rollNumberInput.addEventListener('input', checkBasicValidation);
+            phoneNumberInput.addEventListener('input', checkBasicValidation);
+            reasonInput.addEventListener('input', checkBasicValidation);
+            
+            // Handle form submission
+            form.addEventListener('submit', handleSubmit);
+            
+            // Date handling code
+            const dateInput = document.getElementById('absenceDate');
+            const selectedDatesContainer = document.getElementById('selectedDates');
+            const addDateBtn = document.getElementById('addDateBtn');
+            const quickAddBtns = document.querySelectorAll('.quick-add-btn');
+
+            // Add date button
+            addDateBtn.addEventListener('click', function() {
+                const date = dateInput.value;
+                if (date && !selectedDates.has(date)) {
+                    selectedDates.add(date);
+                    updateSelectedDatesDisplay();
+                }
+            });
+
+            // Quick add buttons
+            quickAddBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const days = parseInt(this.dataset.days);
+                    const startDate = new Date();
+                    startDate.setDate(startDate.getDate() + 1); // Start from tomorrow
+                    
+                    for (let i = 0; i < days; i++) {
+                        const date = new Date(startDate);
+                        date.setDate(startDate.getDate() + i);
+                        const dateStr = date.toISOString().split('T')[0];
+                        selectedDates.add(dateStr);
+                    }
+                    
+                    updateSelectedDatesDisplay();
+                    updateSubmitButton();
+                });
+            });
+
+            // Update selected dates display
+            function updateSelectedDatesDisplay() {
+                selectedDatesContainer.innerHTML = '';
+                selectedDates.forEach(date => {
+                    const dateTag = document.createElement('span');
+                    dateTag.className = 'inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full mr-2 mb-2';
+                    dateTag.innerHTML = `
+                        ${date}
+                        <button type="button" onclick="removeDate('${date}')" class="text-blue-600 hover:text-blue-800">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    `;
+                    selectedDatesContainer.appendChild(dateTag);
+                });
+                // Trigger validation after updating dates
+                checkBasicValidation();
+            }
+
+            // Remove date function
+            window.removeDate = function(date) {
+                selectedDates.delete(date);
+                updateSelectedDatesDisplay();
+            };
+        });
+    </script>
+</body>
+</html>

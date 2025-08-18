@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration - VidhyaSetu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .form-container {
+            padding: 40px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .required {
+            color: #e74c3c;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .form-container {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 VidhyaSetu</h1>
+            <p>Student Registration Form</p>
+        </div>
+        
+        <div class="form-container">
+            <form id="registrationForm">
+                <!-- Tuition Information (Auto-filled) -->
+                <div class="form-group">
+                    <label for="tuition_custom_id">Tuition Center ID <span class="required">*</span></label>
+                    <input type="text" id="tuition_custom_id" name="tuition_custom_id" 
+                           placeholder="Loading..." readonly required>
+                    <small style="color: #666;">This will be automatically filled</small>
+                </div>
+                
+                <!-- Student Personal Information -->
+                <div class="form-group">
+                    <label for="name">Full Name <span class="required">*</span></label>
+                    <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="phone">Phone Number <span class="required">*</span></label>
+                        <input type="tel" id="phone" name="phone" placeholder="Enter phone number" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email (Optional)</label>
+                        <input type="email" id="email" name="email" placeholder="Enter email address">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="address">Address <span class="required">*</span></label>
+                    <textarea id="address" name="address" rows="3" placeholder="Enter your complete address" required></textarea>
+                </div>
+                
+                <!-- Academic Information -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="standard">Class/Standard <span class="required">*</span></label>
+                        <select id="standard" name="standard" required>
+                            <option value="">Loading standards...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="batch_name">Batch Name <span class="required">*</span></label>
+                        <select id="batch_name" name="batch_name" required>
+                            <option value="">Select Batch</option>
+                            <option value="Morning">Morning</option>
+                            <option value="Evening">Evening</option>
+                            <option value="Weekend">Weekend</option>
+                            <option value="Online">Online</option>
+                            <option value="Holiday">Holiday</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Fee Information -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="total_fee">Total Fee <span class="required">*</span></label>
+                        <input type="number" id="total_fee" name="total_fee" 
+                               placeholder="Auto-filled based on standard" readonly required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fees_paid">Fees Paid</label>
+                        <input type="number" id="fees_paid" name="fees_paid" 
+                               placeholder="Enter amount paid (if any)" value="0">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="payment_mode">Last Payment Mode</label>
+                        <select id="payment_mode" name="payment_mode">
+                            <option value="pending">Pending</option>
+                            <option value="cash">Cash</option>
+                            <option value="online">Online</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="payment_date">Payment Date</label>
+                        <input type="date" id="payment_date" name="payment_date">
+                    </div>
+                </div>
+                
+                <!-- Parent Information -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="parent_name">Parent/Guardian Name</label>
+                        <input type="text" id="parent_name" name="parent_name" 
+                               placeholder="Enter parent/guardian name">
+                    </div>
+                    <div class="form-group">
+                        <label for="parent_phone">Parent/Guardian Phone</label>
+                        <input type="tel" id="parent_phone" name="parent_phone" 
+                               placeholder="Enter parent/guardian phone">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="emergency_contact">Emergency Contact</label>
+                    <input type="tel" id="emergency_contact" name="emergency_contact" 
+                           placeholder="Enter emergency contact number">
+                </div>
+                
+                <div class="form-group">
+                    <label for="whatsapp_group">WhatsApp Group Name</label>
+                    <input type="text" id="whatsapp_group" name="whatsapp_group" 
+                           placeholder="e.g., Class 10A Group">
+                </div>
+                
+                <div class="form-group">
+                    <label for="notes">Additional Notes</label>
+                    <textarea id="notes" name="notes" rows="3" 
+                              placeholder="Any additional information or special requirements"></textarea>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    📝 Submit Registration
+                </button>
+            </form>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Submitting your registration...</p>
+            </div>
+            
+            <div class="success-message" id="successMessage">
+                <h3>✅ Registration Submitted Successfully!</h3>
+                <p>Thank you for registering with VidhyaSetu. Your registration has been submitted and will be reviewed by the tuition center.</p>
+                <p>You will be contacted soon for further details.</p>
+            </div>
+            
+            <div class="error-message" id="errorMessage">
+                <h3>❌ Registration Failed</h3>
+                <p id="errorText">There was an error submitting your registration. Please try again.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get tuition custom ID from URL path
+        const pathParts = window.location.pathname.split('/');
+        const tuitionCustomId = pathParts[pathParts.length - 1];
+        
+        let tuitionData = null;
+        let feesStructure = {};
+        
+        // Load tuition data when page loads
+        async function loadTuitionData() {
+            try {
+                console.log('Loading tuition data for ID:', tuitionCustomId);
+                
+                const response = await fetch(`/api/tuition/${tuitionCustomId}`);
+                console.log('API Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('API Error response:', errorText);
+                    throw new Error(`Tuition center not found (${response.status}): ${errorText}`);
+                }
+                
+                tuitionData = await response.json();
+                console.log('Tuition data loaded:', tuitionData);
+                
+                // Auto-fill tuition ID
+                document.getElementById('tuition_custom_id').value = tuitionData.custom_id;
+                
+                // Populate standards dropdown
+                populateStandards();
+                
+                // Store fees structure
+                if (tuitionData.fees_structure) {
+                    // Convert array format to object format
+                    if (Array.isArray(tuitionData.fees_structure)) {
+                        feesStructure = {};
+                        tuitionData.fees_structure.forEach(item => {
+                            feesStructure[item.standard] = item.total_fee;
+                        });
+                        console.log('Converted fees structure:', feesStructure);
+                    } else {
+                        feesStructure = tuitionData.fees_structure;
+                    }
+                    console.log('Fees structure loaded:', feesStructure);
+                    console.log('Fees structure type:', typeof feesStructure);
+                    console.log('Fees structure keys:', Object.keys(feesStructure));
+                } else {
+                    console.log('No fees structure found in tuition data');
+                }
+                
+            } catch (error) {
+                console.error('Error loading tuition data:', error);
+                document.getElementById('errorText').textContent = error.message || 'Error loading tuition center information. Please check the URL.';
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        }
+        
+        // Populate standards dropdown
+        function populateStandards() {
+            const standardSelect = document.getElementById('standard');
+            standardSelect.innerHTML = '<option value="">Select Class</option>';
+            
+            if (tuitionData && tuitionData.standards_offered) {
+                tuitionData.standards_offered.forEach(standard => {
+                    const option = document.createElement('option');
+                    option.value = standard;
+                    option.textContent = standard;
+                    standardSelect.appendChild(option);
+                });
+            }
+        }
+        
+        // Auto-fill total fee when standard is selected
+        document.getElementById('standard').addEventListener('change', function() {
+            const selectedStandard = this.value;
+            const totalFeeInput = document.getElementById('total_fee');
+            
+            console.log('Standard changed to:', selectedStandard);
+            console.log('Available fees structure:', feesStructure);
+            console.log('Fee for selected standard:', feesStructure[selectedStandard]);
+            
+            if (selectedStandard && feesStructure[selectedStandard]) {
+                totalFeeInput.value = feesStructure[selectedStandard];
+                console.log('Fee auto-filled:', feesStructure[selectedStandard]);
+            } else {
+                totalFeeInput.value = '';
+                console.log('No fee found for standard:', selectedStandard);
+            }
+        });
+        
+        // Auto-calculate remaining fee and auto-remove leading zero
+        document.getElementById('fees_paid').addEventListener('input', function(e) {
+            const input = e.target;
+            let value = input.value;
+            
+            // Auto-remove leading zero when user starts typing
+            if (value.length > 1 && value.startsWith('0') && value[1] !== '.') {
+                value = value.substring(1);
+                input.value = value;
+            }
+            
+            // Calculate remaining fee
+            calculateRemainingFee();
+        });
+        
+        function calculateRemainingFee() {
+            const totalFee = parseFloat(document.getElementById('total_fee').value) || 0;
+            const feesPaid = parseFloat(document.getElementById('fees_paid').value) || 0;
+            
+            if (feesPaid > totalFee) {
+                document.getElementById('fees_paid').value = totalFee;
+                alert('Fees paid cannot exceed total fee amount');
+            }
+        }
+        
+        // Load tuition data when page loads
+        loadTuitionData();
+        
+        // Form submission
+        document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // Hide previous messages
+            successMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+            
+            // Show loading
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+            
+            try {
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData.entries());
+                
+                // Convert numeric fields
+                data.total_fee = parseFloat(data.total_fee);
+                data.fees_paid = parseFloat(data.fees_paid) || 0;
+                
+                // Set default values
+                if (!data.payment_date && data.payment_mode !== 'pending') {
+                    data.payment_date = new Date().toISOString().split('T')[0];
+                }
+                
+                // Get tuition_id from loaded data
+                data.tuition_id = tuitionData ? tuitionData.id : null;
+                
+                if (!data.tuition_id) {
+                    throw new Error('Tuition center information not loaded. Please refresh the page.');
+                }
+                
+                const response = await fetch('/graphql', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: `
+                            mutation SubmitPublicRegistration($input: PublicRegistrationInput!) {
+                                submitPublicRegistration(input: $input) {
+                                    id
+                                    name
+                                    status
+                                }
+                            }
+                        `,
+                        variables: {
+                            input: data
+                        }
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.errors) {
+                    throw new Error(result.errors[0].message);
+                }
+                
+                // Show success message
+                successMessage.style.display = 'block';
+                this.reset();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('errorText').textContent = error.message || 'An error occurred. Please try again.';
+                errorMessage.style.display = 'block';
+            } finally {
+                // Hide loading
+                submitBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
+
